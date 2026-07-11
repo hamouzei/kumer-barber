@@ -28,10 +28,11 @@ export function DashboardHeader() {
     <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center justify-between border-b border-border bg-background/95 px-4 backdrop-blur-sm">
       {/* Mobile sidebar trigger */}
       <Sheet>
-        <SheetTrigger asChild className="md:hidden">
-          <Button variant="ghost" size="icon" aria-label="Open sidebar">
-            <Menu className="h-5 w-5" />
-          </Button>
+        <SheetTrigger
+          className="md:hidden"
+          render={<Button variant="ghost" size="icon" aria-label="Open sidebar" />}
+        >
+          <Menu className="h-5 w-5" />
         </SheetTrigger>
         <SheetContent side="left" className="w-60 p-0">
           <Sidebar />
@@ -44,20 +45,22 @@ export function DashboardHeader() {
       <div className="flex items-center gap-2">
         {/* Notifications */}
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="relative"
-              aria-label="Notifications"
-            >
-              <Bell className="h-4 w-4" />
-              {unreadCount > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-brass px-1 text-[10px] font-bold text-brand">
-                  {unreadCount > 9 ? "9+" : unreadCount}
-                </span>
-              )}
-            </Button>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative"
+                aria-label="Notifications"
+              />
+            }
+          >
+            <Bell className="h-4 w-4" />
+            {unreadCount > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-brass px-1 text-[10px] font-bold text-brand">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-80">
             <DropdownMenuLabel className="flex items-center justify-between">

@@ -70,33 +70,33 @@ export function Sidebar() {
                 : pathname.startsWith(link.href);
             const Icon = link.icon;
 
-            const linkContent = (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={cn(
-                  "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
-                  isActive
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                    : "text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
-                  collapsed && "justify-center px-2"
-                )}
-              >
-                <Icon className="h-4 w-4 shrink-0" />
-                {!collapsed && <span>{link.label}</span>}
-              </Link>
+            const linkClasses = cn(
+              "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
+              isActive
+                ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                : "text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
+              collapsed && "justify-center px-2"
             );
 
             if (collapsed) {
               return (
                 <Tooltip key={link.href}>
-                  <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
+                  <TooltipTrigger
+                    render={<Link href={link.href} className={linkClasses} />}
+                  >
+                    <Icon className="h-4 w-4 shrink-0" />
+                  </TooltipTrigger>
                   <TooltipContent side="right">{link.label}</TooltipContent>
                 </Tooltip>
               );
             }
 
-            return linkContent;
+            return (
+              <Link key={link.href} href={link.href} className={linkClasses}>
+                <Icon className="h-4 w-4 shrink-0" />
+                <span>{link.label}</span>
+              </Link>
+            );
           })}
         </nav>
       </ScrollArea>
