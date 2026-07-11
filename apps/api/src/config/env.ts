@@ -8,7 +8,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(3001),
 
   // Database (Aiven MySQL)
-  DATABASE_URL: z.url().describe("MySQL connection string from Aiven"),
+  DATABASE_URL: z.string().min(1).describe("MySQL connection string from Aiven"),
 
   // JWT (RS256)
   JWT_PRIVATE_KEY: z.string().min(1).describe("RSA private key (PEM format) for signing JWTs"),
@@ -22,7 +22,7 @@ const envSchema = z.object({
   CLOUDINARY_API_SECRET: z.string().min(1),
 
   // CORS
-  FRONTEND_URL: z.url().default("http://localhost:3000"),
+  FRONTEND_URL: z.string().default("http://localhost:3000"),
 
   // Seed (optional — only needed for initial admin setup)
   SEED_ADMIN_EMAIL: z.email().optional(),
