@@ -21,7 +21,14 @@ export function validate(schema: ZodType, target: ValidationTarget = "body") {
       return;
     }
 
-    req[target] = result.data;
+    // Express 5 makes req.query and req.params read-only getters.
+    // For "body" we can assign directly. For "query" and "params"
+    // we store the validated data on a custom property instead.
+    if (target === "body") {
+      req.body = result.data;
+    } else {
+      (req as Record<string, unknown>)[`validated_${target}`] = result.data;
+    }
     next();
   };
 }

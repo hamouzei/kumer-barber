@@ -4,15 +4,19 @@ import { updateSettingsDto } from "./settings.dto.js";
 import { requireAuth } from "../auth/auth.middleware.js";
 import * as settingsController from "./settings.controller.js";
 
-const router = Router();
+const publicRouter = Router();
+const adminRouter = Router();
 
-router.use(requireAuth);
+// Public — only returns booking-relevant fields (deposit, payment instructions)
+publicRouter.get("/", settingsController.getPublicSettings);
 
-router.get("/", settingsController.getSettings);
-router.put(
+// Admin — full settings access
+adminRouter.use(requireAuth);
+adminRouter.get("/", settingsController.getSettings);
+adminRouter.put(
   "/",
   validate(updateSettingsDto),
   settingsController.updateSettings
 );
 
-export { router as settingsRoutes };
+export { publicRouter as settingsPublicRoutes, adminRouter as settingsRoutes };

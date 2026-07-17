@@ -25,7 +25,10 @@ import {
   contentPublicRoutes,
   contentAdminRoutes,
 } from "./modules/website-content/website-content.routes.js";
-import { settingsRoutes } from "./modules/settings/settings.routes.js";
+import {
+  settingsPublicRoutes,
+  settingsRoutes,
+} from "./modules/settings/settings.routes.js";
 import {
   notificationAdminRoutes,
   notificationPublicRoutes,
@@ -67,6 +70,7 @@ export function createApp() {
   app.use("/api/v1/uploads", uploadRoutes);
   app.use("/api/v1/gallery", galleryPublicRoutes);
   app.use("/api/v1/website", contentPublicRoutes);
+  app.use("/api/v1/settings", settingsPublicRoutes);
 
   // ─── Admin Routes ───
   app.use("/api/v1/admin", authRoutes);

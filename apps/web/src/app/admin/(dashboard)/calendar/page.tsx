@@ -18,8 +18,8 @@ export default function CalendarPage() {
     const dateStr = format(selectedDate, "yyyy-MM-dd");
     setIsLoading(true);
     api
-      .get<Appointment[]>(`/admin/appointments/by-date/${dateStr}`)
-      .then(setAppointments)
+      .get<{ data: Appointment[] }>(`/admin/appointments?date=${dateStr}&limit=100`)
+      .then((res) => setAppointments(res.data))
       .catch(() => setAppointments([]))
       .finally(() => setIsLoading(false));
   }, [selectedDate]);

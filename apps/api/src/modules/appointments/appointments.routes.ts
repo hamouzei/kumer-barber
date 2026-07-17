@@ -3,7 +3,6 @@ import { validate } from "../../shared/middleware/validate.js";
 import {
   createBookingDto,
   updateAppointmentStatusDto,
-  appointmentQueryDto,
 } from "./appointments.dto.js";
 import { bookingLimiter } from "../../shared/middleware/rate-limiter.js";
 import { requireAuth } from "../auth/auth.middleware.js";
@@ -27,7 +26,6 @@ adminRouter.use(requireAuth);
 
 adminRouter.get(
   "/",
-  validate(appointmentQueryDto, "query"),
   appointmentsController.getAllAppointments
 );
 

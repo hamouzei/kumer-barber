@@ -75,9 +75,9 @@ export default function BookingPage() {
       .catch(() => setError("Failed to load availability. Please try again."))
       .finally(() => setIsLoading(false));
 
-    // Fetch business settings separately (public endpoint)
+    // Fetch business settings (public endpoint)
     api
-      .get<BusinessSettings>("/admin/settings")
+      .get<BusinessSettings>("/settings")
       .catch(() => null)
       .then((s) => {
         if (s) setSettings(s);

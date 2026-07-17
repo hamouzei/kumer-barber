@@ -1,9 +1,12 @@
 import type { Request, Response } from "express";
 import * as appointmentsService from "./appointments.service.js";
+import {
+  createBookingDto,
+  appointmentQueryDto,
+} from "./appointments.dto.js";
 import type {
   CreateBookingDto,
   UpdateAppointmentStatusDto,
-  AppointmentQueryDto,
 } from "./appointments.dto.js";
 
 export async function createBooking(
@@ -28,7 +31,7 @@ export async function getAllAppointments(
   req: Request,
   res: Response
 ): Promise<void> {
-  const query = req.query as unknown as AppointmentQueryDto;
+  const query = appointmentQueryDto.parse(req.query);
   const result = await appointmentsService.getAllAppointments(query);
   res.status(200).json(result);
 }
