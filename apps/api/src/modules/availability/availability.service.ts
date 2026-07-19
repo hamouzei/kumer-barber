@@ -1,4 +1,4 @@
-import { eq, and, inArray } from "drizzle-orm";
+import { and, gte, lte, inArray, sql } from "drizzle-orm";
 import { db } from "../../db/client.js";
 import { appointments, businessSettings } from "../../db/schema/index.js";
 import { NotFoundError } from "../../shared/errors/app-error.js";
@@ -35,6 +35,25 @@ function generateTimeSlots(
   return slots;
 }
 
+function buildDateRange(workingDays: number[], daysAhead: number): string[] {
+  const today = new Date();
+  const dates: string[] = [];
+
+  for (let i = 0; i < daysAhead; i++) {
+    const date = new Date(today);
+    date.setDate(today.getDate() + i);
+    if (workingDays.includes(date.getDay())) {
+      dates.push(date.toISOString().split("T")[0]!);
+    }
+  }
+
+  return dates;
+}
+
+/**
+ * Fetches available dates with a SINGLE database query instead of N queries.
+ * Groups booked slots by date and filters against the total slot count.
+ */
 export async function getAvailableDates(): Promise<string[]> {
   const [settings] = await db.select().from(businessSettings).limit(1);
 
@@ -43,48 +62,49 @@ export async function getAvailableDates(): Promise<string[]> {
   }
 
   const workingDays = settings.workingDays as number[];
-  const today = new Date();
-  const availableDates: string[] = [];
+  const candidateDates = buildDateRange(workingDays, 30);
 
-  for (let i = 0; i < 30; i++) {
-    const date = new Date(today);
-    date.setDate(today.getDate() + i);
-    const dayOfWeek = date.getDay();
+  if (candidateDates.length === 0) return [];
 
-    if (!workingDays.includes(dayOfWeek)) {
-      continue;
-    }
+  const allSlots = generateTimeSlots(
+    settings.openingTime,
+    settings.closingTime,
+    settings.durationMinutes
+  );
+  const totalSlotCount = allSlots.length;
 
-    const dateStr = date.toISOString().split("T")[0]!;
+  if (totalSlotCount === 0) return [];
 
-    const allSlots = generateTimeSlots(
-      settings.openingTime,
-      settings.closingTime,
-      settings.durationMinutes
-    );
+  const firstDate = candidateDates[0]!;
+  const lastDate = candidateDates[candidateDates.length - 1]!;
 
-    const bookedSlots = await db
-      .select({ startTime: appointments.startTime })
-      .from(appointments)
-      .where(
-        and(
-          eq(appointments.appointmentDate, dateStr),
-          inArray(appointments.status, ["pending", "approved"])
-        )
-      );
+  // Single query: count booked slots per date across the entire 30-day range
+  const bookedCounts = await db
+    .select({
+      date: appointments.appointmentDate,
+      bookedCount: sql<number>`COUNT(*)`.as("booked_count"),
+    })
+    .from(appointments)
+    .where(
+      and(
+        gte(appointments.appointmentDate, firstDate),
+        lte(appointments.appointmentDate, lastDate),
+        inArray(appointments.status, ["pending", "approved"])
+      )
+    )
+    .groupBy(appointments.appointmentDate);
 
-    const bookedTimes = new Set(
-      bookedSlots.map((s) => s.startTime.slice(0, 5))
-    );
-
-    const freeSlots = allSlots.filter((slot) => !bookedTimes.has(slot));
-
-    if (freeSlots.length > 0) {
-      availableDates.push(dateStr);
-    }
+  // Build a map of date -> booked slot count
+  const bookedMap = new Map<string, number>();
+  for (const row of bookedCounts) {
+    bookedMap.set(row.date, row.bookedCount);
   }
 
-  return availableDates;
+  // A date is available if it has fewer booked slots than total possible slots
+  return candidateDates.filter((date) => {
+    const booked = bookedMap.get(date) ?? 0;
+    return booked < totalSlotCount;
+  });
 }
 
 export async function getAvailableSlots(
@@ -110,12 +130,13 @@ export async function getAvailableSlots(
     settings.durationMinutes
   );
 
+  // Single query for this specific date
   const bookedSlots = await db
     .select({ startTime: appointments.startTime })
     .from(appointments)
     .where(
       and(
-        eq(appointments.appointmentDate, date),
+        sql`${appointments.appointmentDate} = ${date}`,
         inArray(appointments.status, ["pending", "approved"])
       )
     );

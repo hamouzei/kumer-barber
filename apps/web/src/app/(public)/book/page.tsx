@@ -8,29 +8,40 @@ import type {
   BusinessSettings,
   CreateBookingResponse,
 } from "@/types";
+import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  CalendarDays,
   Clock,
-  User,
-  CreditCard,
+  Info,
+  Copy,
   Check,
-  ChevronLeft,
-  ChevronRight,
   Loader2,
   Upload,
   AlertCircle,
+  Send,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const STEPS = [
-  { label: "Date", icon: CalendarDays },
-  { label: "Time", icon: Clock },
-  { label: "Details", icon: User },
-  { label: "Payment", icon: CreditCard },
-  { label: "Confirm", icon: Check },
+/* ─── Static payment accounts (editable later from admin) ─── */
+const PAYMENT_ACCOUNTS = [
+  {
+    name: "CBE (Commercial Bank of Ethiopia)",
+    accountNumber: "1000 4821 7365 90",
+    holder: "Yabu Barber Shop",
+    color: "bg-purple-50 border-purple-200",
+    accent: "text-purple-700",
+    badge: "bg-purple-100 text-purple-800",
+  },
+  {
+    name: "Telebirr",
+    accountNumber: "0912 345 678",
+    holder: "Yabu Barber Shop",
+    color: "bg-green-50 border-green-200",
+    accent: "text-green-700",
+    badge: "bg-green-100 text-green-800",
+  },
 ];
 
 interface BookingState {
@@ -43,15 +54,18 @@ interface BookingState {
 
 export default function BookingPage() {
   const router = useRouter();
-  const [step, setStep] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
   const [settings, setSettings] = useState<BusinessSettings | null>(null);
   const [availableDates, setAvailableDates] = useState<string[]>([]);
-  const [availableSlots, setAvailableSlots] = useState<AvailableSlots | null>(null);
+  const [availableSlots, setAvailableSlots] = useState<AvailableSlots | null>(
+    null
+  );
   const [slotsLoading, setSlotsLoading] = useState(false);
+  const [uploadingProof, setUploadingProof] = useState(false);
+  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
 
   const [booking, setBooking] = useState<BookingState>({
     date: "",
@@ -61,34 +75,40 @@ export default function BookingPage() {
     paymentProofUrl: "",
   });
 
-  const [uploadingProof, setUploadingProof] = useState(false);
-
-  // Fetch available dates + settings on mount
+  // Fetch dates + settings on mount
   useEffect(() => {
     Promise.all([
       api.get<string[]>("/availability"),
-      api.get<BusinessSettings>("/availability").catch(() => null),
+      api.get<BusinessSettings>("/settings").catch(() => null),
     ])
-      .then(([dates]) => {
+      .then(([dates, s]) => {
         setAvailableDates(dates);
+        if (s) setSettings(s);
       })
       .catch(() => setError("Failed to load availability. Please try again."))
       .finally(() => setIsLoading(false));
-
-    // Fetch business settings (public endpoint)
-    api
-      .get<BusinessSettings>("/settings")
-      .catch(() => null)
-      .then((s) => {
-        if (s) setSettings(s);
-      });
   }, []);
 
-  // Fetch slots when date changes
-  const fetchSlots = useCallback(async (date: string) => {
+  // Build a Set of available date strings for fast lookup
+  const availableDateSet = new Set(availableDates);
+
+  // Convert to Date objects for the calendar's `modifiers`
+  const availableDateObjects = availableDates.map(
+    (d) => new Date(d + "T00:00:00")
+  );
+
+  // Selected date as a Date object for the calendar
+  const selectedDate = booking.date
+    ? new Date(booking.date + "T00:00:00")
+    : undefined;
+
+  // Fetch time slots when a date is selected
+  const fetchSlots = useCallback(async (dateStr: string) => {
     setSlotsLoading(true);
     try {
-      const result = await api.get<AvailableSlots>(`/availability/${date}`);
+      const result = await api.get<AvailableSlots>(
+        `/availability/${dateStr}`
+      );
       setAvailableSlots(result);
     } catch {
       setError("Failed to load time slots.");
@@ -97,16 +117,17 @@ export default function BookingPage() {
     }
   }, []);
 
-  function handleDateSelect(date: string) {
-    setBooking((prev) => ({ ...prev, date, time: "" }));
+  function handleDateSelect(date: Date | undefined) {
+    if (!date) return;
+    const dateStr = date.toISOString().split("T")[0]!;
+    if (!availableDateSet.has(dateStr)) return;
+    setBooking((prev) => ({ ...prev, date: dateStr, time: "" }));
     setAvailableSlots(null);
-    fetchSlots(date);
-    setStep(1);
+    fetchSlots(dateStr);
   }
 
   function handleTimeSelect(time: string) {
     setBooking((prev) => ({ ...prev, time }));
-    setStep(2);
   }
 
   async function handleUploadProof(file: File) {
@@ -128,8 +149,25 @@ export default function BookingPage() {
   }
 
   async function handleSubmit() {
-    setIsSubmitting(true);
     setError("");
+    if (!booking.date || !booking.time) {
+      setError("Please select a date and time.");
+      return;
+    }
+    if (booking.fullName.trim().length < 2) {
+      setError("Please enter your full name.");
+      return;
+    }
+    if (booking.phone.trim().length < 9) {
+      setError("Please enter a valid phone number.");
+      return;
+    }
+    if (!booking.paymentProofUrl) {
+      setError("Please upload your payment proof.");
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
       const result = await api.post<CreateBookingResponse>("/bookings", {
         full_name: booking.fullName,
@@ -147,29 +185,26 @@ export default function BookingPage() {
     }
   }
 
-  function canAdvance(): boolean {
-    switch (step) {
-      case 0:
-        return booking.date !== "";
-      case 1:
-        return booking.time !== "";
-      case 2:
-        return booking.fullName.trim().length >= 2 && booking.phone.trim().length >= 9;
-      case 3:
-        return booking.paymentProofUrl !== "";
-      default:
-        return true;
-    }
+  function copyAccount(text: string, idx: number) {
+    navigator.clipboard.writeText(text);
+    setCopiedIdx(idx);
+    setTimeout(() => setCopiedIdx(null), 2000);
   }
 
   function formatDate(dateStr: string): string {
-    const date = new Date(dateStr + "T00:00:00");
-    return date.toLocaleDateString("en-US", {
-      weekday: "short",
-      month: "short",
+    return new Date(dateStr + "T00:00:00").toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
       day: "numeric",
     });
   }
+
+  const isFormComplete =
+    booking.date !== "" &&
+    booking.time !== "" &&
+    booking.fullName.trim().length >= 2 &&
+    booking.phone.trim().length >= 9 &&
+    booking.paymentProofUrl !== "";
 
   if (isLoading) {
     return (
@@ -182,169 +217,195 @@ export default function BookingPage() {
   return (
     <div className="page-transition">
       {/* Hero */}
-      <section className="bg-brand py-12">
-        <div className="mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
+      <section className="bg-brand py-10">
+        <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">
           <h1 className="font-heading text-3xl font-bold tracking-tight text-linen sm:text-4xl">
             Book Your Appointment
           </h1>
           <p className="mt-2 text-sm text-linen/60">
-            Select your preferred date and time
+            Pick a date, choose a time, and you&apos;re all set
           </p>
         </div>
       </section>
 
-      {/* Progress Bar */}
-      <div className="border-b border-border bg-background">
-        <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-4">
-          {STEPS.map((s, i) => {
-            const Icon = s.icon;
-            const isCompleted = i < step;
-            const isCurrent = i === step;
-
-            return (
-              <div key={s.label} className="flex items-center gap-2">
-                <div
-                  className={cn(
-                    "flex h-8 w-8 items-center justify-center rounded-full border-2 text-xs font-bold transition-colors",
-                    isCompleted
-                      ? "border-brass bg-brass text-brand"
-                      : isCurrent
-                        ? "border-brass text-brass"
-                        : "border-border text-muted-foreground"
-                  )}
-                >
-                  {isCompleted ? (
-                    <Check className="h-4 w-4" />
-                  ) : (
-                    <Icon className="h-3.5 w-3.5" />
-                  )}
-                </div>
-                <span
-                  className={cn(
-                    "hidden text-xs font-medium sm:block",
-                    isCurrent ? "text-foreground" : "text-muted-foreground"
-                  )}
-                >
-                  {s.label}
-                </span>
-                {i < STEPS.length - 1 && (
-                  <div
-                    className={cn(
-                      "mx-2 hidden h-px w-8 sm:block lg:w-16",
-                      isCompleted ? "bg-brass" : "bg-border"
-                    )}
-                  />
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Step Content */}
       <section className="py-8">
-        <div className="mx-auto max-w-2xl px-4 sm:px-6">
+        <div className="mx-auto max-w-2xl space-y-6 px-4 sm:px-6">
+          {/* Error */}
           {error && (
-            <div className="mb-6 flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 animate-in fade-in slide-in-from-top-2">
               <AlertCircle className="h-4 w-4 shrink-0" />
               {error}
             </div>
           )}
 
-          {/* Step 0: Date Selection */}
-          {step === 0 && (
-            <div>
-              <h2 className="font-heading text-xl font-semibold">
-                Select a Date
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Choose your preferred appointment date
-              </p>
-              <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {availableDates.map((date) => (
-                  <button
-                    key={date}
-                    onClick={() => handleDateSelect(date)}
+          {/* ─── Important Info ─── */}
+          <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-5">
+            <div className="flex items-start gap-3">
+              <Info className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+              <div className="space-y-1.5">
+                <h2 className="font-heading text-base font-semibold text-amber-900">
+                  Before You Book
+                </h2>
+                <ul className="space-y-1 text-sm text-amber-800">
+                  <li className="flex items-start gap-2">
+                    <span className="mt-1.5 block h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
+                    A <strong>50% deposit</strong> is required to confirm
+                    {settings && (
+                      <span className="font-semibold">
+                        &nbsp;({settings.depositAmount} ETB)
+                      </span>
+                    )}
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="mt-1.5 block h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
+                    Please <strong>arrive on time</strong> — late arrivals may be
+                    cancelled
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="mt-1.5 block h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
+                    Transfer the deposit, then upload the screenshot below
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* ─── Payment Accounts (CBE & Telebirr) ─── */}
+          <div className="rounded-xl border border-border p-5">
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <svg className="h-4 w-4 text-brass" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
+              </svg>
+              Transfer Deposit To
+            </h3>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              {PAYMENT_ACCOUNTS.map((acc, idx) => (
+                <div
+                  key={acc.name}
+                  className={cn(
+                    "rounded-lg border p-4 transition-colors",
+                    acc.color
+                  )}
+                >
+                  <span
                     className={cn(
-                      "rounded-lg border-2 px-4 py-3 text-center text-sm font-medium transition-all hover:border-brass hover:bg-brass/5",
-                      booking.date === date
-                        ? "border-brass bg-brass/10 text-foreground"
-                        : "border-border text-muted-foreground"
+                      "inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold",
+                      acc.badge
                     )}
                   >
-                    <div className="text-xs text-muted-foreground">
-                      {new Date(date + "T00:00:00").toLocaleDateString("en-US", {
-                        weekday: "short",
-                      })}
+                    {acc.name.split("(")[0]!.trim()}
+                  </span>
+                  <div className="mt-2.5 flex items-center justify-between gap-2">
+                    <div>
+                      <p
+                        className={cn(
+                          "font-mono text-lg font-bold tracking-wide",
+                          acc.accent
+                        )}
+                      >
+                        {acc.accountNumber}
+                      </p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {acc.holder}
+                      </p>
                     </div>
-                    <div className="mt-0.5 font-semibold text-foreground">
-                      {new Date(date + "T00:00:00").toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </div>
-                  </button>
-                ))}
-              </div>
-              {availableDates.length === 0 && (
-                <p className="mt-8 text-center text-muted-foreground">
-                  No available dates at the moment. Please check back later.
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* Step 1: Time Selection */}
-          {step === 1 && (
-            <div>
-              <h2 className="font-heading text-xl font-semibold">
-                Select a Time
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Available slots for {formatDate(booking.date)}
-              </p>
-              {slotsLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-6 w-6 animate-spin text-brass" />
-                </div>
-              ) : (
-                <div className="mt-6 grid grid-cols-3 gap-3 sm:grid-cols-4">
-                  {availableSlots?.slots.map((slot) => (
                     <button
-                      key={slot.time}
-                      onClick={() => handleTimeSelect(slot.time)}
-                      className={cn(
-                        "rounded-lg border-2 px-4 py-3 text-center text-sm font-semibold transition-all hover:border-brass hover:bg-brass/5",
-                        booking.time === slot.time
-                          ? "border-brass bg-brass/10"
-                          : "border-border"
-                      )}
+                      onClick={() => copyAccount(acc.accountNumber, idx)}
+                      className="shrink-0 rounded-md border border-border bg-background p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      title="Copy account number"
                     >
-                      {slot.time}
+                      {copiedIdx === idx ? (
+                        <Check className="h-4 w-4 text-emerald-500" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
                     </button>
-                  ))}
+                  </div>
                 </div>
-              )}
-              {!slotsLoading && availableSlots?.slots.length === 0 && (
-                <p className="mt-8 text-center text-muted-foreground">
-                  No available slots for this date. Please select another date.
-                </p>
-              )}
+              ))}
             </div>
-          )}
+          </div>
 
-          {/* Step 2: Personal Details */}
-          {step === 2 && (
-            <div>
-              <h2 className="font-heading text-xl font-semibold">
+          {/* ─── Date Selection (Mini Calendar) ─── */}
+          <div className="rounded-xl border border-border p-5">
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <svg className="h-4 w-4 text-brass" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+              </svg>
+              Select a Date
+            </h3>
+
+            <div className="mt-3 flex justify-center">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={handleDateSelect}
+                disabled={(date) => {
+                  const dateStr = date.toISOString().split("T")[0]!;
+                  return !availableDateSet.has(dateStr);
+                }}
+                modifiers={{
+                  available: availableDateObjects,
+                }}
+                modifiersClassNames={{
+                  available:
+                    "font-bold text-brass-dark bg-brass/10 rounded-md",
+                }}
+                className="rounded-lg"
+              />
+            </div>
+
+            {/* Time slots appear after date selection */}
+            {booking.date && (
+              <div className="mt-5 border-t border-border pt-5 animate-in fade-in slide-in-from-top-2">
+                <h4 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <Clock className="h-4 w-4 text-brass" />
+                  Available Times — {formatDate(booking.date)}
+                </h4>
+                {slotsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-5 w-5 animate-spin text-brass" />
+                  </div>
+                ) : availableSlots?.slots.length === 0 ? (
+                  <p className="mt-4 text-center text-sm text-muted-foreground">
+                    No slots available. Pick another date.
+                  </p>
+                ) : (
+                  <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
+                    {availableSlots?.slots.map((slot) => (
+                      <button
+                        key={slot.time}
+                        onClick={() => handleTimeSelect(slot.time)}
+                        className={cn(
+                          "rounded-lg border-2 px-3 py-2.5 text-center text-sm font-semibold transition-all hover:border-brass hover:bg-brass/5",
+                          booking.time === slot.time
+                            ? "border-brass bg-brass/10 shadow-sm"
+                            : "border-border"
+                        )}
+                      >
+                        {slot.time}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* ─── Personal Details (appears after time is selected) ─── */}
+          {booking.time && (
+            <div className="rounded-xl border border-border p-5 animate-in fade-in slide-in-from-top-2">
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <svg className="h-4 w-4 text-brass" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0" />
+                </svg>
                 Your Details
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Tell us how to reach you
-              </p>
-              <div className="mt-6 space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="fullName">Full Name</Label>
+              </h3>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="fullName" className="text-xs">
+                    Full Name
+                  </Label>
                   <Input
                     id="fullName"
                     placeholder="Enter your full name"
@@ -357,12 +418,14 @@ export default function BookingPage() {
                     }
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="phone" className="text-xs">
+                    Phone Number
+                  </Label>
                   <Input
                     id="phone"
                     type="tel"
-                    placeholder="e.g. +251 9XX XXX XXX"
+                    placeholder="e.g. 09XX XXX XXX"
                     value={booking.phone}
                     onChange={(e) =>
                       setBooking((prev) => ({
@@ -376,164 +439,91 @@ export default function BookingPage() {
             </div>
           )}
 
-          {/* Step 3: Payment */}
-          {step === 3 && (
-            <div>
-              <h2 className="font-heading text-xl font-semibold">
-                Payment
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Transfer the deposit and upload proof
-              </p>
+          {/* ─── Payment Proof (appears after details are filled) ─── */}
+          {booking.fullName.trim().length >= 2 &&
+            booking.phone.trim().length >= 9 && (
+              <div className="rounded-xl border border-border p-5 animate-in fade-in slide-in-from-top-2">
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <Upload className="h-4 w-4 text-brass" />
+                  Payment Proof
+                </h3>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Upload a screenshot of your transfer confirmation
+                </p>
 
-              {settings && (
-                <div className="mt-6 rounded-lg border border-border bg-muted/50 p-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">
-                      Deposit Amount
-                    </span>
-                    <span className="font-heading text-lg font-bold text-brass">
-                      {settings.depositAmount} ETB
-                    </span>
-                  </div>
-                  {settings.paymentInstructions && (
-                    <p className="mt-3 text-sm text-muted-foreground whitespace-pre-line">
-                      {settings.paymentInstructions}
-                    </p>
-                  )}
-                </div>
-              )}
-
-              <div className="mt-6 space-y-4">
-                <Label>Upload Payment Proof</Label>
-                {booking.paymentProofUrl ? (
-                  <div className="flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
-                    <Check className="h-5 w-5 text-emerald-600" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-emerald-800">
+                <div className="mt-4">
+                  {booking.paymentProofUrl ? (
+                    <div className="flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+                      <Check className="h-5 w-5 shrink-0 text-emerald-600" />
+                      <p className="flex-1 text-sm font-medium text-emerald-800">
                         Payment proof uploaded
                       </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setBooking((prev) => ({
+                            ...prev,
+                            paymentProofUrl: "",
+                          }))
+                        }
+                      >
+                        Replace
+                      </Button>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        setBooking((prev) => ({
-                          ...prev,
-                          paymentProofUrl: "",
-                        }))
-                      }
-                    >
-                      Replace
-                    </Button>
-                  </div>
-                ) : (
-                  <label className="flex cursor-pointer flex-col items-center gap-3 rounded-lg border-2 border-dashed border-border p-8 transition-colors hover:border-brass hover:bg-brass/5">
-                    {uploadingProof ? (
-                      <Loader2 className="h-8 w-8 animate-spin text-brass" />
-                    ) : (
-                      <Upload className="h-8 w-8 text-muted-foreground" />
-                    )}
-                    <span className="text-sm text-muted-foreground">
-                      {uploadingProof
-                        ? "Uploading..."
-                        : "Click to upload screenshot or photo"}
-                    </span>
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handleUploadProof(file);
-                      }}
-                      disabled={uploadingProof}
-                    />
-                  </label>
-                )}
+                  ) : (
+                    <label className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed border-border p-6 transition-colors hover:border-brass hover:bg-brass/5">
+                      {uploadingProof ? (
+                        <Loader2 className="h-7 w-7 animate-spin text-brass" />
+                      ) : (
+                        <Upload className="h-7 w-7 text-muted-foreground" />
+                      )}
+                      <span className="text-sm text-muted-foreground">
+                        {uploadingProof
+                          ? "Uploading..."
+                          : "Click to upload screenshot or photo"}
+                      </span>
+                      <span className="text-[11px] text-muted-foreground/60">
+                        JPG, PNG, or WEBP · Max 5 MB
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleUploadProof(file);
+                        }}
+                        disabled={uploadingProof}
+                      />
+                    </label>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Step 4: Confirmation */}
-          {step === 4 && (
-            <div>
-              <h2 className="font-heading text-xl font-semibold">
-                Confirm Booking
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Please review your booking details
-              </p>
-
-              <div className="mt-6 space-y-3 rounded-lg border border-border p-6">
-                {[
-                  { label: "Date", value: formatDate(booking.date) },
-                  { label: "Time", value: booking.time },
-                  { label: "Name", value: booking.fullName },
-                  { label: "Phone", value: booking.phone },
-                  {
-                    label: "Deposit",
-                    value: settings
-                      ? `${settings.depositAmount} ETB`
-                      : "—",
-                  },
-                  {
-                    label: "Payment Proof",
-                    value: booking.paymentProofUrl ? "✓ Uploaded" : "—",
-                  },
-                ].map((item) => (
-                  <div
-                    key={item.label}
-                    className="flex items-center justify-between border-b border-border pb-3 last:border-0 last:pb-0"
-                  >
-                    <span className="text-sm text-muted-foreground">
-                      {item.label}
-                    </span>
-                    <span className="text-sm font-medium">{item.value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Navigation */}
-          <div className="mt-8 flex items-center justify-between">
-            <Button
-              variant="outline"
-              onClick={() => setStep(step - 1)}
-              disabled={step === 0}
-              className="gap-1"
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Back
-            </Button>
-
-            {step < 4 ? (
-              <Button
-                onClick={() => setStep(step + 1)}
-                disabled={!canAdvance()}
-                className="gap-1 bg-brass text-brand hover:bg-brass-light font-semibold"
-              >
-                Next
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            ) : (
+          {/* ─── Submit ─── */}
+          {booking.paymentProofUrl && (
+            <div className="pb-8 animate-in fade-in slide-in-from-top-2">
               <Button
                 onClick={handleSubmit}
-                disabled={isSubmitting}
-                className="gap-1 bg-brass text-brand hover:bg-brass-light font-semibold"
+                disabled={!isFormComplete || isSubmitting}
+                className="w-full gap-2 bg-brass py-6 text-base font-semibold text-brand hover:bg-brass-light disabled:opacity-40"
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-5 w-5 animate-spin" />
                     Submitting...
                   </>
                 ) : (
-                  "Submit Booking"
+                  <>
+                    <Send className="h-4 w-4" />
+                    Submit Booking
+                  </>
                 )}
               </Button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </section>
     </div>
