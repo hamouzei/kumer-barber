@@ -16,6 +16,7 @@ import type {
   AppointmentQueryDto,
 } from "./appointments.dto.js";
 import type { PaginatedResponse } from "../../shared/types.js";
+import { randomBytes } from "node:crypto";
 
 function addMinutesToTime(time: string, minutes: number): string {
   const [h, m] = time.split(":").map(Number);
@@ -26,9 +27,20 @@ function addMinutesToTime(time: string, minutes: number): string {
   return `${String(newH).padStart(2, "0")}:${String(newM).padStart(2, "0")}:00`;
 }
 
+/** Generates a human-readable booking reference like YBU-7X3K9M */
+function generateBookingRef(): string {
+  const CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O/I/1
+  const bytes = randomBytes(6);
+  let code = "";
+  for (let i = 0; i < 6; i++) {
+    code += CHARS[bytes[i]! % CHARS.length];
+  }
+  return `YBU-${code}`;
+}
+
 export async function createBooking(
   dto: CreateBookingDto
-): Promise<{ booking_id: number; status: string; message: string }> {
+): Promise<{ booking_id: number; booking_ref: string; status: string; message: string }> {
   const [settings] = await db.select().from(businessSettings).limit(1);
   if (!settings) {
     throw new NotFoundError("Business settings");
@@ -36,6 +48,7 @@ export async function createBooking(
 
   const endTime = addMinutesToTime(dto.start_time, settings.durationMinutes);
   const startTimeDb = dto.start_time + ":00";
+  const bookingRef = generateBookingRef();
 
   // Use a raw connection for the transaction with pessimistic locking
   const connection = await pool.getConnection();
@@ -78,12 +91,13 @@ export async function createBooking(
       throw new Error("Failed to resolve customer");
     }
 
-    // Insert the appointment
+    // Insert the appointment with booking reference
     const [insertResult] = await connection.execute(
       `INSERT INTO appointments
-       (customer_id, appointment_date, start_time, end_time, status, payment_amount, payment_proof, version)
-       VALUES (?, ?, ?, ?, 'pending', ?, ?, 1)`,
+       (booking_ref, customer_id, appointment_date, start_time, end_time, status, payment_amount, payment_proof, version)
+       VALUES (?, ?, ?, ?, ?, 'pending', ?, ?, 1)`,
       [
+        bookingRef,
         customerRow.customer_id,
         dto.appointment_date,
         startTimeDb,
@@ -111,6 +125,7 @@ export async function createBooking(
 
     return {
       booking_id: appointmentId,
+      booking_ref: bookingRef,
       status: "pending",
       message: "Booking request submitted successfully.",
     };
@@ -126,6 +141,7 @@ export async function getBookingStatus(
   bookingId: number
 ): Promise<{
   booking_id: number;
+  booking_ref: string;
   status: string;
   appointment_date: string;
   time: string;
@@ -133,6 +149,7 @@ export async function getBookingStatus(
   const [appointment] = await db
     .select({
       bookingId: appointments.appointmentId,
+      bookingRef: appointments.bookingRef,
       status: appointments.status,
       appointmentDate: appointments.appointmentDate,
       startTime: appointments.startTime,
@@ -147,6 +164,7 @@ export async function getBookingStatus(
 
   return {
     booking_id: appointment.bookingId,
+    booking_ref: appointment.bookingRef,
     status: appointment.status,
     appointment_date: appointment.appointmentDate,
     time: appointment.startTime.slice(0, 5),
@@ -190,6 +208,7 @@ export async function getAllAppointments(
     db
       .select({
         appointmentId: appointments.appointmentId,
+        bookingRef: appointments.bookingRef,
         appointmentDate: appointments.appointmentDate,
         startTime: appointments.startTime,
         endTime: appointments.endTime,
@@ -231,6 +250,7 @@ export async function getAppointmentDetail(id: number) {
   const [result] = await db
     .select({
       appointmentId: appointments.appointmentId,
+      bookingRef: appointments.bookingRef,
       appointmentDate: appointments.appointmentDate,
       startTime: appointments.startTime,
       endTime: appointments.endTime,
@@ -256,6 +276,7 @@ export async function getAppointmentDetail(id: number) {
 
   return {
     booking_id: result.appointmentId,
+    booking_ref: result.bookingRef,
     customer: {
       id: result.customerId,
       name: result.customerName,

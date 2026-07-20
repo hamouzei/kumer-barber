@@ -8,6 +8,7 @@ import {
   mysqlTable,
   time,
   timestamp,
+  uniqueIndex,
   varchar,
 } from "drizzle-orm/mysql-core";
 import { customers } from "./customers.js";
@@ -27,6 +28,7 @@ export const appointments = mysqlTable(
     appointmentId: bigint("appointment_id", { mode: "number" })
       .primaryKey()
       .autoincrement(),
+    bookingRef: varchar("booking_ref", { length: 12 }).notNull(),
     customerId: bigint("customer_id", { mode: "number" })
       .notNull()
       .references(() => customers.customerId, { onDelete: "restrict" }),
@@ -45,6 +47,7 @@ export const appointments = mysqlTable(
     updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
   },
   (table) => [
+    uniqueIndex("idx_appointments_booking_ref").on(table.bookingRef),
     index("idx_appointments_date_time").on(
       table.appointmentDate,
       table.startTime
@@ -53,3 +56,4 @@ export const appointments = mysqlTable(
     index("idx_appointments_customer").on(table.customerId),
   ]
 );
+

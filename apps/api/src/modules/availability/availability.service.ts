@@ -62,7 +62,7 @@ export async function getAvailableDates(): Promise<string[]> {
   }
 
   const workingDays = settings.workingDays as number[];
-  const candidateDates = buildDateRange(workingDays, 30);
+  const candidateDates = buildDateRange(workingDays, 90);
 
   if (candidateDates.length === 0) return [];
 

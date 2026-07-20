@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api-client";
 import type {
@@ -24,7 +24,37 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-/* ─── Static payment accounts (editable later from admin) ─── */
+/* ─── Helpers ─── */
+
+/** Format a Date to "YYYY-MM-DD" in LOCAL timezone (avoids UTC off-by-one). */
+function toLocalDateStr(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+/** Convert "HH:MM" (24h) → "h:MM AM/PM" (12h) */
+function to12Hour(time24: string): string {
+  const [hStr, mStr] = time24.split(":");
+  let h = parseInt(hStr!, 10);
+  const suffix = h >= 12 ? "PM" : "AM";
+  if (h === 0) h = 12;
+  else if (h > 12) h -= 12;
+  return `${h}:${mStr} ${suffix}`;
+}
+
+/** Check whether "HH:MM" has already passed today. */
+function isTimePast(time24: string): boolean {
+  const now = new Date();
+  const [h, m] = time24.split(":").map(Number);
+  return (
+    (h ?? 0) < now.getHours() ||
+    ((h ?? 0) === now.getHours() && (m ?? 0) <= now.getMinutes())
+  );
+}
+
+/* ─── Static payment accounts ─── */
 const PAYMENT_ACCOUNTS = [
   {
     name: "CBE (Commercial Bank of Ethiopia)",
@@ -43,6 +73,8 @@ const PAYMENT_ACCOUNTS = [
     badge: "bg-green-100 text-green-800",
   },
 ];
+
+/* ─── Component ─── */
 
 interface BookingState {
   date: string;
@@ -89,12 +121,46 @@ export default function BookingPage() {
       .finally(() => setIsLoading(false));
   }, []);
 
-  // Build a Set of available date strings for fast lookup
-  const availableDateSet = new Set(availableDates);
+  // ─── Calendar helpers ───
 
-  // Convert to Date objects for the calendar's `modifiers`
-  const availableDateObjects = availableDates.map(
-    (d) => new Date(d + "T00:00:00")
+  const availableDateSet = useMemo(
+    () => new Set(availableDates),
+    [availableDates]
+  );
+
+  const todayStr = toLocalDateStr(new Date());
+
+  // Working days from settings (0=Sun … 6=Sat). Default Mon-Sat.
+  const workingDays = useMemo(
+    () => new Set(settings?.workingDays ?? [1, 2, 3, 4, 5, 6]),
+    [settings?.workingDays]
+  );
+
+  // Calendar `disabled` matcher — disable if:
+  //   • day is before today
+  //   • day is not a working day
+  //   • day is not in the available dates set
+  const disabledMatcher = useCallback(
+    (date: Date): boolean => {
+      const dateStr = toLocalDateStr(date);
+      // Past date
+      if (dateStr < todayStr) return true;
+      // Non-working day
+      if (!workingDays.has(date.getDay())) return true;
+      // Not in available dates list
+      if (!availableDateSet.has(dateStr)) return true;
+      return false;
+    },
+    [todayStr, workingDays, availableDateSet]
+  );
+
+  // Bold working-day dates that are in the future
+  const workingDayModifier = useCallback(
+    (date: Date): boolean => {
+      const dateStr = toLocalDateStr(date);
+      return dateStr >= todayStr && workingDays.has(date.getDay());
+    },
+    [todayStr, workingDays]
   );
 
   // Selected date as a Date object for the calendar
@@ -103,23 +169,36 @@ export default function BookingPage() {
     : undefined;
 
   // Fetch time slots when a date is selected
-  const fetchSlots = useCallback(async (dateStr: string) => {
-    setSlotsLoading(true);
-    try {
-      const result = await api.get<AvailableSlots>(
-        `/availability/${dateStr}`
-      );
-      setAvailableSlots(result);
-    } catch {
-      setError("Failed to load time slots.");
-    } finally {
-      setSlotsLoading(false);
+  const fetchSlots = useCallback(
+    async (dateStr: string) => {
+      setSlotsLoading(true);
+      try {
+        const result = await api.get<AvailableSlots>(
+          `/availability/${dateStr}`
+        );
+        setAvailableSlots(result);
+      } catch {
+        setError("Failed to load time slots.");
+      } finally {
+        setSlotsLoading(false);
+      }
+    },
+    []
+  );
+
+  // Filter out past time slots if the selected date is today
+  const visibleSlots = useMemo(() => {
+    if (!availableSlots) return [];
+    const slots = availableSlots.slots;
+    if (booking.date === todayStr) {
+      return slots.filter((s) => !isTimePast(s.time));
     }
-  }, []);
+    return slots;
+  }, [availableSlots, booking.date, todayStr]);
 
   function handleDateSelect(date: Date | undefined) {
     if (!date) return;
-    const dateStr = date.toISOString().split("T")[0]!;
+    const dateStr = toLocalDateStr(date);
     if (!availableDateSet.has(dateStr)) return;
     setBooking((prev) => ({ ...prev, date: dateStr, time: "" }));
     setAvailableSlots(null);
@@ -273,8 +352,18 @@ export default function BookingPage() {
           {/* ─── Payment Accounts (CBE & Telebirr) ─── */}
           <div className="rounded-xl border border-border p-5">
             <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-              <svg className="h-4 w-4 text-brass" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
+              <svg
+                className="h-4 w-4 text-brass"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z"
+                />
               </svg>
               Transfer Deposit To
             </h3>
@@ -329,8 +418,18 @@ export default function BookingPage() {
           {/* ─── Date Selection (Mini Calendar) ─── */}
           <div className="rounded-xl border border-border p-5">
             <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-              <svg className="h-4 w-4 text-brass" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+              <svg
+                className="h-4 w-4 text-brass"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"
+                />
               </svg>
               Select a Date
             </h3>
@@ -340,16 +439,12 @@ export default function BookingPage() {
                 mode="single"
                 selected={selectedDate}
                 onSelect={handleDateSelect}
-                disabled={(date) => {
-                  const dateStr = date.toISOString().split("T")[0]!;
-                  return !availableDateSet.has(dateStr);
-                }}
+                disabled={disabledMatcher}
                 modifiers={{
-                  available: availableDateObjects,
+                  workday: workingDayModifier,
                 }}
                 modifiersClassNames={{
-                  available:
-                    "font-bold text-brass-dark bg-brass/10 rounded-md",
+                  workday: "font-bold",
                 }}
                 className="rounded-lg"
               />
@@ -366,13 +461,13 @@ export default function BookingPage() {
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="h-5 w-5 animate-spin text-brass" />
                   </div>
-                ) : availableSlots?.slots.length === 0 ? (
+                ) : visibleSlots.length === 0 ? (
                   <p className="mt-4 text-center text-sm text-muted-foreground">
                     No slots available. Pick another date.
                   </p>
                 ) : (
                   <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
-                    {availableSlots?.slots.map((slot) => (
+                    {visibleSlots.map((slot) => (
                       <button
                         key={slot.time}
                         onClick={() => handleTimeSelect(slot.time)}
@@ -383,7 +478,7 @@ export default function BookingPage() {
                             : "border-border"
                         )}
                       >
-                        {slot.time}
+                        {to12Hour(slot.time)}
                       </button>
                     ))}
                   </div>
@@ -396,8 +491,18 @@ export default function BookingPage() {
           {booking.time && (
             <div className="rounded-xl border border-border p-5 animate-in fade-in slide-in-from-top-2">
               <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                <svg className="h-4 w-4 text-brass" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0" />
+                <svg
+                  className="h-4 w-4 text-brass"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0"
+                  />
                 </svg>
                 Your Details
               </h3>

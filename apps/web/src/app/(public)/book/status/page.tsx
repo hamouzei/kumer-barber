@@ -117,8 +117,8 @@ function BookingStatusContent() {
         <div className="mx-auto max-w-lg px-4 sm:px-6">
           <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">
-                Booking #{booking.booking_id}
+              <span className="font-mono text-sm font-semibold text-foreground">
+                {booking.booking_ref}
               </span>
               <StatusBadge status={booking.status} />
             </div>

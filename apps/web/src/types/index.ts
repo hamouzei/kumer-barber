@@ -72,6 +72,7 @@ export type AppointmentStatus =
 
 export interface Appointment {
   appointmentId: number;
+  bookingRef: string;
   appointmentDate: string;
   startTime: string;
   endTime: string;
@@ -86,6 +87,7 @@ export interface Appointment {
 
 export interface AppointmentDetail {
   booking_id: number;
+  booking_ref: string;
   customer: {
     id: number;
     name: string;
@@ -109,6 +111,7 @@ export interface AppointmentDetail {
 
 export interface BookingStatus {
   booking_id: number;
+  booking_ref: string;
   status: AppointmentStatus;
   appointment_date: string;
   time: string;
@@ -180,6 +183,7 @@ export interface BookingFormData {
 
 export interface CreateBookingResponse {
   booking_id: number;
+  booking_ref: string;
   status: string;
   message: string;
 }

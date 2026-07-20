@@ -134,6 +134,7 @@ function AppointmentsContent() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Ref</TableHead>
                   <TableHead>Customer</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Time</TableHead>
@@ -145,6 +146,11 @@ function AppointmentsContent() {
               <TableBody>
                 {data.data.map((apt) => (
                   <TableRow key={apt.appointmentId}>
+                    <TableCell>
+                      <span className="font-mono text-xs font-semibold text-brass-dark">
+                        {apt.bookingRef}
+                      </span>
+                    </TableCell>
                     <TableCell>
                       <div>
                         <p className="text-sm font-medium">
