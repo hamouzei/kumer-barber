@@ -256,7 +256,7 @@ export default function BookingPage() {
         payment_amount: settings ? parseFloat(settings.depositAmount) : 0,
         payment_proof: booking.paymentProofUrl,
       });
-      router.push(`/book/status?id=${result.booking_id}`);
+      router.push(`/book/status?ref=${result.booking_ref}`);
     } catch {
       setError("Failed to submit booking. Please try again.");
     } finally {

@@ -27,7 +27,7 @@ export function validate(schema: ZodType, target: ValidationTarget = "body") {
     if (target === "body") {
       req.body = result.data;
     } else {
-      (req as Record<string, unknown>)[`validated_${target}`] = result.data;
+      ((req as unknown) as Record<string, unknown>)[`validated_${target}`] = result.data;
     }
     next();
   };

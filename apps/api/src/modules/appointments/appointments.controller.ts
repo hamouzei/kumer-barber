@@ -1,7 +1,6 @@
 import type { Request, Response } from "express";
 import * as appointmentsService from "./appointments.service.js";
 import {
-  createBookingDto,
   appointmentQueryDto,
 } from "./appointments.dto.js";
 import type {
@@ -22,8 +21,8 @@ export async function getBookingStatus(
   req: Request,
   res: Response
 ): Promise<void> {
-  const id = Number(req.params.id);
-  const result = await appointmentsService.getBookingStatus(id);
+  const ref = req.params.ref as string;
+  const result = await appointmentsService.getBookingStatus(ref);
   res.status(200).json(result);
 }
 

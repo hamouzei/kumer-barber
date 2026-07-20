@@ -138,7 +138,7 @@ export async function createBooking(
 }
 
 export async function getBookingStatus(
-  bookingId: number
+  bookingRef: string
 ): Promise<{
   booking_id: number;
   booking_ref: string;
@@ -155,11 +155,11 @@ export async function getBookingStatus(
       startTime: appointments.startTime,
     })
     .from(appointments)
-    .where(eq(appointments.appointmentId, bookingId))
+    .where(eq(appointments.bookingRef, bookingRef))
     .limit(1);
 
   if (!appointment) {
-    throw new NotFoundError("Booking", bookingId);
+    throw new NotFoundError("Booking", bookingRef);
   }
 
   return {

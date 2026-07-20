@@ -19,7 +19,7 @@ publicRouter.post(
   appointmentsController.createBooking
 );
 
-publicRouter.get("/:id", appointmentsController.getBookingStatus);
+publicRouter.get("/:ref", appointmentsController.getBookingStatus);
 
 // Admin routes (all require auth)
 adminRouter.use(requireAuth);

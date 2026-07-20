@@ -12,6 +12,7 @@ const navLinks = [
   { href: "/about", label: "About" },
   { href: "/gallery", label: "Gallery" },
   { href: "/team", label: "Meet the Barber" },
+  { href: "/book/status", label: "Check Booking" },
 ];
 
 export function Navbar() {
