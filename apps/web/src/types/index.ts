@@ -16,6 +16,7 @@ export interface BusinessSettings {
   contactPhone: string | null;
   contactEmail: string | null;
   address: string | null;
+  googleMapsUrl?: string | null;
   socialLinks: Record<string, string>;
 }
 

@@ -57,6 +57,8 @@ export async function updateSettings(dto: UpdateSettingsDto) {
   if (dto.contact_email !== undefined)
     updates.contactEmail = dto.contact_email;
   if (dto.address !== undefined) updates.address = dto.address;
+  if (dto.google_maps_url !== undefined)
+    updates.googleMapsUrl = dto.google_maps_url;
   if (dto.social_links !== undefined)
     updates.socialLinks = dto.social_links;
 

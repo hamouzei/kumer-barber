@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Scissors, Award, Heart, Loader2 } from "lucide-react";
 import { api } from "@/lib/api-client";
+import { BarbershopMap } from "@/components/shared/barbershop-map";
+import type { BusinessSettings } from "@/types";
 
 interface ContentSectionData {
   title?: string;
@@ -14,17 +16,18 @@ interface ContentSectionData {
 
 export default function AboutPage() {
   const [aboutContent, setAboutContent] = useState<ContentSectionData | null>(null);
+  const [settings, setSettings] = useState<BusinessSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    api
-      .get<Record<string, ContentSectionData>>("/content")
-      .then((res) => {
-        if (res.about) {
-          setAboutContent(res.about);
-        }
+    Promise.all([
+      api.get<Record<string, ContentSectionData>>("/content").catch(() => null),
+      api.get<BusinessSettings>("/settings").catch(() => null),
+    ])
+      .then(([contentRes, settingsRes]) => {
+        if (contentRes?.about) setAboutContent(contentRes.about);
+        if (settingsRes) setSettings(settingsRes);
       })
-      .catch(() => {})
       .finally(() => setIsLoading(false));
   }, []);
 
@@ -121,6 +124,19 @@ Our approach combines time-honored barbering techniques with modern styling tren
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Location & Directions Map */}
+      <section className="py-16">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <BarbershopMap
+            address={settings?.address}
+            googleMapsUrl={settings?.googleMapsUrl}
+            contactPhone={settings?.contactPhone}
+            openingTime={settings?.openingTime}
+            closingTime={settings?.closingTime}
+          />
         </div>
       </section>
     </div>

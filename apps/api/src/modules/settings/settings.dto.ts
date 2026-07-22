@@ -24,6 +24,7 @@ export const updateSettingsDto = z.object({
   contact_phone: z.string().max(50).nullable().optional(),
   contact_email: z.string().max(100).nullable().optional(),
   address: z.string().nullable().optional(),
+  google_maps_url: z.string().nullable().optional(),
   social_links: z.record(z.string(), z.string()).nullable().optional(),
 });
 

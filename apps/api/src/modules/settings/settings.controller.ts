@@ -19,6 +19,7 @@ export async function getPublicSettings(
     contactPhone: settings.contactPhone,
     contactEmail: settings.contactEmail,
     address: settings.address,
+    googleMapsUrl: settings.googleMapsUrl,
     socialLinks: settings.socialLinks,
   });
 }

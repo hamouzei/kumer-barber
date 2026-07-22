@@ -70,6 +70,7 @@ export default function SettingsPage() {
         contact_phone: settings.contactPhone || null,
         contact_email: settings.contactEmail || null,
         address: settings.address || null,
+        google_maps_url: settings.googleMapsUrl || (settings.address?.startsWith("http") ? settings.address : null),
         social_links: settings.socialLinks || {},
       });
       setSaved(true);
@@ -320,13 +321,25 @@ export default function SettingsPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="address">Address</Label>
+              <Label htmlFor="address">Shop Physical Address / Name</Label>
               <Input
                 id="address"
                 value={settings.address ?? ""}
                 onChange={(e) => updateField("address", e.target.value)}
-                placeholder="Shop location"
+                placeholder="e.g. Bole Medhanealem, Next to Edna Mall, 2nd Floor, Addis Ababa"
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="googleMapsUrl">Google Maps Location Link / URL</Label>
+              <Input
+                id="googleMapsUrl"
+                value={settings.googleMapsUrl ?? ""}
+                onChange={(e) => updateField("googleMapsUrl", e.target.value)}
+                placeholder="e.g. https://maps.app.goo.gl/xyz or https://www.google.com/maps/place/..."
+              />
+              <p className="text-xs text-muted-foreground">
+                Paste your exact Google Maps share link here. Customers clicking &quot;Get Directions&quot; on the homepage will be taken straight to this exact pin on Google Maps.
+              </p>
             </div>
 
             <Separator />

@@ -3,11 +3,25 @@ const API_BASE_URL =
 
 let accessToken: string | null = null;
 
+if (typeof window !== "undefined") {
+  accessToken = sessionStorage.getItem("admin_access_token");
+}
+
 export function setAccessToken(token: string | null): void {
   accessToken = token;
+  if (typeof window !== "undefined") {
+    if (token) {
+      sessionStorage.setItem("admin_access_token", token);
+    } else {
+      sessionStorage.removeItem("admin_access_token");
+    }
+  }
 }
 
 export function getAccessToken(): string | null {
+  if (!accessToken && typeof window !== "undefined") {
+    accessToken = sessionStorage.getItem("admin_access_token");
+  }
   return accessToken;
 }
 
@@ -46,15 +60,16 @@ async function handleResponse<T>(response: Response): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-function buildHeaders(isFormData = false): HeadersInit {
+function buildHeaders(isFormData = false): Record<string, string> {
   const headers: Record<string, string> = {};
 
   if (!isFormData) {
     headers["Content-Type"] = "application/json";
   }
 
-  if (accessToken) {
-    headers["Authorization"] = `Bearer ${accessToken}`;
+  const token = getAccessToken();
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
   }
 
   return headers;
@@ -66,23 +81,30 @@ async function request<T>(
 ): Promise<T> {
   const url = `${API_BASE_URL}${path}`;
 
+  const currentHeaders = {
+    ...buildHeaders(options.body instanceof FormData),
+    ...(options.headers as Record<string, string>),
+  };
+
   const response = await fetch(url, {
     credentials: "include",
     ...options,
+    headers: currentHeaders,
   });
 
-  // Auto-refresh on 401 if we have a token (it might be expired)
-  if (response.status === 401 && accessToken) {
+  // Auto-refresh on 401 if it's an authenticated endpoint (not login)
+  if (response.status === 401 && !path.includes("/login") && !path.includes("/refresh")) {
     const refreshed = await tryRefreshToken();
     if (refreshed) {
-      // Retry the original request with new token
+      // Retry the original request with newly refreshed token
+      const retryHeaders = {
+        ...currentHeaders,
+        Authorization: `Bearer ${getAccessToken()}`,
+      };
       const retryResponse = await fetch(url, {
         ...options,
         credentials: "include",
-        headers: {
-          ...(options.headers as Record<string, string>),
-          Authorization: `Bearer ${accessToken}`,
-        },
+        headers: retryHeaders,
       });
       return handleResponse<T>(retryResponse);
     }
@@ -99,15 +121,15 @@ async function tryRefreshToken(): Promise<boolean> {
     });
 
     if (!response.ok) {
-      accessToken = null;
+      setAccessToken(null);
       return false;
     }
 
     const data = (await response.json()) as { token: string };
-    accessToken = data.token;
+    setAccessToken(data.token);
     return true;
   } catch {
-    accessToken = null;
+    setAccessToken(null);
     return false;
   }
 }
@@ -118,14 +140,12 @@ export const api = {
   get<T>(path: string): Promise<T> {
     return request<T>(path, {
       method: "GET",
-      headers: buildHeaders(),
     });
   },
 
   post<T>(path: string, body?: unknown): Promise<T> {
     return request<T>(path, {
       method: "POST",
-      headers: buildHeaders(),
       body: body ? JSON.stringify(body) : undefined,
     });
   },
@@ -133,7 +153,6 @@ export const api = {
   put<T>(path: string, body: unknown): Promise<T> {
     return request<T>(path, {
       method: "PUT",
-      headers: buildHeaders(),
       body: JSON.stringify(body),
     });
   },
@@ -141,7 +160,6 @@ export const api = {
   patch<T>(path: string, body?: unknown): Promise<T> {
     return request<T>(path, {
       method: "PATCH",
-      headers: buildHeaders(),
       body: body ? JSON.stringify(body) : undefined,
     });
   },
@@ -149,14 +167,12 @@ export const api = {
   delete<T>(path: string): Promise<T> {
     return request<T>(path, {
       method: "DELETE",
-      headers: buildHeaders(),
     });
   },
 
   async upload<T>(path: string, formData: FormData): Promise<T> {
     return request<T>(path, {
       method: "POST",
-      headers: buildHeaders(true),
       body: formData,
     });
   },

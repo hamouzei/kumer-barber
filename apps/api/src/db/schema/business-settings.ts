@@ -30,6 +30,7 @@ export const businessSettings = mysqlTable("business_settings", {
   contactPhone: varchar("contact_phone", { length: 20 }),
   contactEmail: varchar("contact_email", { length: 100 }),
   address: text("address"),
+  googleMapsUrl: text("google_maps_url"),
   socialLinks: json("social_links")
     .$type<Record<string, string>>()
     .default({}),

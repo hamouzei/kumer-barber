@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
   DropdownMenuLabel,
+  DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -63,17 +64,19 @@ export function DashboardHeader() {
             )}
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-80">
-            <DropdownMenuLabel className="flex items-center justify-between">
-              <span>Notifications</span>
-              {unreadCount > 0 && (
-                <button
-                  onClick={markAllAsRead}
-                  className="text-xs font-normal text-brass hover:text-brass-light transition-colors"
-                >
-                  Mark all as read
-                </button>
-              )}
-            </DropdownMenuLabel>
+            <DropdownMenuGroup>
+              <DropdownMenuLabel className="flex items-center justify-between">
+                <span>Notifications</span>
+                {unreadCount > 0 && (
+                  <button
+                    onClick={markAllAsRead}
+                    className="text-xs font-normal text-brass hover:text-brass-light transition-colors"
+                  >
+                    Mark all as read
+                  </button>
+                )}
+              </DropdownMenuLabel>
+            </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <ScrollArea className="max-h-72">
               {notifications.length === 0 ? (
@@ -81,40 +84,42 @@ export function DashboardHeader() {
                   No notifications
                 </div>
               ) : (
-                notifications.slice(0, 10).map((notification) => (
-                  <DropdownMenuItem
-                    key={notification.notificationId}
-                    className={cn(
-                      "flex flex-col items-start gap-1 p-3 cursor-pointer",
-                      !notification.isRead && "bg-accent/50"
-                    )}
-                    onClick={() => {
-                      if (!notification.isRead) {
-                        markAsRead(notification.notificationId);
-                      }
-                    }}
-                  >
-                    <div className="flex w-full items-center justify-between gap-2">
-                      <span className="text-sm font-medium">
-                        {notification.title}
-                      </span>
-                      {!notification.isRead && (
-                        <Badge
-                          variant="secondary"
-                          className="h-1.5 w-1.5 rounded-full bg-brass p-0"
-                        />
+                <DropdownMenuGroup>
+                  {notifications.slice(0, 10).map((notification) => (
+                    <DropdownMenuItem
+                      key={notification.notificationId}
+                      className={cn(
+                        "flex flex-col items-start gap-1 p-3 cursor-pointer",
+                        !notification.isRead && "bg-accent/50"
                       )}
-                    </div>
-                    <p className="text-xs text-muted-foreground line-clamp-2">
-                      {notification.message}
-                    </p>
-                    <span className="text-[10px] text-muted-foreground/60">
-                      {formatDistanceToNow(new Date(notification.createdAt), {
-                        addSuffix: true,
-                      })}
-                    </span>
-                  </DropdownMenuItem>
-                ))
+                      onClick={() => {
+                        if (!notification.isRead) {
+                          markAsRead(notification.notificationId);
+                        }
+                      }}
+                    >
+                      <div className="flex w-full items-center justify-between gap-2">
+                        <span className="text-sm font-medium">
+                          {notification.title}
+                        </span>
+                        {!notification.isRead && (
+                          <Badge
+                            variant="secondary"
+                            className="h-1.5 w-1.5 rounded-full bg-brass p-0"
+                          />
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground line-clamp-2">
+                        {notification.message}
+                      </p>
+                      <span className="text-[10px] text-muted-foreground/60">
+                        {formatDistanceToNow(new Date(notification.createdAt), {
+                          addSuffix: true,
+                        })}
+                      </span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuGroup>
               )}
             </ScrollArea>
           </DropdownMenuContent>
