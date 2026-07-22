@@ -56,17 +56,21 @@ export default function SettingsPage() {
     setIsSaving(true);
     try {
       await api.put("/admin/settings", {
-        haircut_price: settings.haircutPrice,
-        deposit_amount: settings.depositAmount,
+        haircut_price: parseFloat(settings.haircutPrice) || 500,
+        deposit_amount: parseFloat(settings.depositAmount) || 0,
         duration_minutes: settings.durationMinutes,
         opening_time: settings.openingTime,
         closing_time: settings.closingTime,
         working_days: settings.workingDays,
-        payment_instructions: settings.paymentInstructions,
-        contact_phone: settings.contactPhone,
-        contact_email: settings.contactEmail,
-        address: settings.address,
-        social_links: settings.socialLinks,
+        payment_instructions: settings.paymentInstructions || null,
+        cbe_account: settings.cbeAccount || null,
+        telebirr_account: settings.telebirrAccount || null,
+        account_holder: settings.accountHolder || null,
+        booking_policy: settings.bookingPolicy || null,
+        contact_phone: settings.contactPhone || null,
+        contact_email: settings.contactEmail || null,
+        address: settings.address || null,
+        social_links: settings.socialLinks || {},
       });
       setSaved(true);
     } catch {
@@ -123,7 +127,7 @@ export default function SettingsPage() {
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <DollarSign className="h-4 w-4 text-brass" />
-              Pricing
+              Pricing & Deposit
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -211,23 +215,79 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* Payment Instructions */}
+        {/* Bank Account Details */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <Settings className="h-4 w-4 text-brass" />
-              Payment Instructions
+              Bank Account Details
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <Textarea
-              value={settings.paymentInstructions ?? ""}
-              onChange={(e) =>
-                updateField("paymentInstructions", e.target.value)
-              }
-              placeholder="Instructions shown to customers during payment step..."
-              rows={4}
-            />
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="accountHolder">Account Holder Name</Label>
+              <Input
+                id="accountHolder"
+                value={settings.accountHolder ?? ""}
+                onChange={(e) => updateField("accountHolder", e.target.value)}
+                placeholder="e.g. Yabu Barber Shop"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cbeAccount">CBE Account Number</Label>
+              <Input
+                id="cbeAccount"
+                value={settings.cbeAccount ?? ""}
+                onChange={(e) => updateField("cbeAccount", e.target.value)}
+                placeholder="e.g. 1000 4821 7365 90"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="telebirrAccount">Telebirr Account Number</Label>
+              <Input
+                id="telebirrAccount"
+                value={settings.telebirrAccount ?? ""}
+                onChange={(e) => updateField("telebirrAccount", e.target.value)}
+                placeholder="e.g. 0912 345 678"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="paymentInstructions">Additional Payment Notes</Label>
+              <Textarea
+                id="paymentInstructions"
+                value={settings.paymentInstructions ?? ""}
+                onChange={(e) =>
+                  updateField("paymentInstructions", e.target.value)
+                }
+                placeholder="Instructions shown to customers during payment..."
+                rows={2}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Booking Policy & Notice (Informative Information) */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Settings className="h-4 w-4 text-brass" />
+              Booking Policy & Customer Notice
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="bookingPolicy">Customer Notice Text</Label>
+              <Textarea
+                id="bookingPolicy"
+                value={settings.bookingPolicy ?? ""}
+                onChange={(e) => updateField("bookingPolicy", e.target.value)}
+                placeholder="Notice displayed to customers before payment (e.g., deposit rules, arrival times)..."
+                rows={5}
+              />
+              <p className="text-xs text-muted-foreground">
+                This notice will be displayed to customers when they reach the payment step. Leave blank to use default policy.
+              </p>
+            </div>
           </CardContent>
         </Card>
 

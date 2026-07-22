@@ -317,105 +317,7 @@ export default function BookingPage() {
             </div>
           )}
 
-          {/* ─── Important Info ─── */}
-          <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-5">
-            <div className="flex items-start gap-3">
-              <Info className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
-              <div className="space-y-1.5">
-                <h2 className="font-heading text-base font-semibold text-amber-900">
-                  Before You Book
-                </h2>
-                <ul className="space-y-1 text-sm text-amber-800">
-                  <li className="flex items-start gap-2">
-                    <span className="mt-1.5 block h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
-                    A <strong>50% deposit</strong> is required to confirm
-                    {settings && (
-                      <span className="font-semibold">
-                        &nbsp;({settings.depositAmount} ETB)
-                      </span>
-                    )}
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="mt-1.5 block h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
-                    Please <strong>arrive on time</strong> — late arrivals may be
-                    cancelled
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="mt-1.5 block h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
-                    Transfer the deposit, then upload the screenshot below
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          {/* ─── Payment Accounts (CBE & Telebirr) ─── */}
-          <div className="rounded-xl border border-border p-5">
-            <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-              <svg
-                className="h-4 w-4 text-brass"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z"
-                />
-              </svg>
-              Transfer Deposit To
-            </h3>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
-              {PAYMENT_ACCOUNTS.map((acc, idx) => (
-                <div
-                  key={acc.name}
-                  className={cn(
-                    "rounded-lg border p-4 transition-colors",
-                    acc.color
-                  )}
-                >
-                  <span
-                    className={cn(
-                      "inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold",
-                      acc.badge
-                    )}
-                  >
-                    {acc.name.split("(")[0]!.trim()}
-                  </span>
-                  <div className="mt-2.5 flex items-center justify-between gap-2">
-                    <div>
-                      <p
-                        className={cn(
-                          "font-mono text-lg font-bold tracking-wide",
-                          acc.accent
-                        )}
-                      >
-                        {acc.accountNumber}
-                      </p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {acc.holder}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => copyAccount(acc.accountNumber, idx)}
-                      className="shrink-0 rounded-md border border-border bg-background p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                      title="Copy account number"
-                    >
-                      {copiedIdx === idx ? (
-                        <Check className="h-4 w-4 text-emerald-500" />
-                      ) : (
-                        <Copy className="h-4 w-4" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* ─── Date Selection (Mini Calendar) ─── */}
+          {/* ─── 1. Date Selection (Mini Calendar) ─── */}
           <div className="rounded-xl border border-border p-5">
             <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
               <svg
@@ -487,7 +389,7 @@ export default function BookingPage() {
             )}
           </div>
 
-          {/* ─── Personal Details (appears after time is selected) ─── */}
+          {/* ─── 2. Personal Details (appears after time is selected) ─── */}
           {booking.time && (
             <div className="rounded-xl border border-border p-5 animate-in fade-in slide-in-from-top-2">
               <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
@@ -544,70 +446,199 @@ export default function BookingPage() {
             </div>
           )}
 
-          {/* ─── Payment Proof (appears after details are filled) ─── */}
+          {/* ─── 3. Payment Instructions, Informative Info & Proof (appears after name & phone are filled) ─── */}
           {booking.fullName.trim().length >= 2 &&
             booking.phone.trim().length >= 9 && (
-              <div className="rounded-xl border border-border p-5 animate-in fade-in slide-in-from-top-2">
-                <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                  <Upload className="h-4 w-4 text-brass" />
-                  Payment Proof
-                </h3>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Upload a screenshot of your transfer confirmation
-                </p>
-
-                <div className="mt-4">
-                  {booking.paymentProofUrl ? (
-                    <div className="flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
-                      <Check className="h-5 w-5 shrink-0 text-emerald-600" />
-                      <p className="flex-1 text-sm font-medium text-emerald-800">
-                        Payment proof uploaded
-                      </p>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          setBooking((prev) => ({
-                            ...prev,
-                            paymentProofUrl: "",
-                          }))
-                        }
-                      >
-                        Replace
-                      </Button>
-                    </div>
-                  ) : (
-                    <label className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed border-border p-6 transition-colors hover:border-brass hover:bg-brass/5">
-                      {uploadingProof ? (
-                        <Loader2 className="h-7 w-7 animate-spin text-brass" />
+              <div className="space-y-6 animate-in fade-in slide-in-from-top-2">
+                {/* Informative Info Notice */}
+                <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-5">
+                  <div className="flex items-start gap-3">
+                    <Info className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+                    <div className="space-y-1.5">
+                      <h2 className="font-heading text-base font-semibold text-amber-900">
+                        Before You Book
+                      </h2>
+                      {settings?.bookingPolicy ? (
+                        <p className="text-sm text-amber-800 whitespace-pre-line leading-relaxed">
+                          {settings.bookingPolicy}
+                        </p>
                       ) : (
-                        <Upload className="h-7 w-7 text-muted-foreground" />
+                        <ul className="space-y-1 text-sm text-amber-800">
+                          <li className="flex items-start gap-2">
+                            <span className="mt-1.5 block h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
+                            A <strong>deposit</strong> is required to confirm
+                            {settings && (
+                              <span className="font-semibold">
+                                &nbsp;({settings.depositAmount} ETB)
+                              </span>
+                            )}
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="mt-1.5 block h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
+                            Please <strong>arrive on time</strong> — late arrivals may be cancelled
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="mt-1.5 block h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
+                            Transfer the deposit, then upload the screenshot below
+                          </li>
+                        </ul>
                       )}
-                      <span className="text-sm text-muted-foreground">
-                        {uploadingProof
-                          ? "Uploading..."
-                          : "Click to upload screenshot or photo"}
-                      </span>
-                      <span className="text-[11px] text-muted-foreground/60">
-                        JPG, PNG, or WEBP · Max 5 MB
-                      </span>
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) handleUploadProof(file);
-                        }}
-                        disabled={uploadingProof}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Payment Accounts (CBE & Telebirr) */}
+                <div className="rounded-xl border border-border p-5">
+                  <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <svg
+                      className="h-4 w-4 text-brass"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={2}
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z"
                       />
-                    </label>
+                    </svg>
+                    Transfer Deposit To
+                  </h3>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    {[
+                      {
+                        name: "CBE (Commercial Bank of Ethiopia)",
+                        accountNumber: settings?.cbeAccount || "1000 4821 7365 90",
+                        holder: settings?.accountHolder || "Yabu Barber Shop",
+                        color: "bg-purple-50 border-purple-200",
+                        accent: "text-purple-700",
+                        badge: "bg-purple-100 text-purple-800",
+                      },
+                      {
+                        name: "Telebirr",
+                        accountNumber: settings?.telebirrAccount || "0912 345 678",
+                        holder: settings?.accountHolder || "Yabu Barber Shop",
+                        color: "bg-green-50 border-green-200",
+                        accent: "text-green-700",
+                        badge: "bg-green-100 text-green-800",
+                      },
+                    ].map((acc, idx) => (
+                      <div
+                        key={acc.name}
+                        className={cn(
+                          "rounded-lg border p-4 transition-colors",
+                          acc.color
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold",
+                            acc.badge
+                          )}
+                        >
+                          {acc.name.split("(")[0]!.trim()}
+                        </span>
+                        <div className="mt-2.5 flex items-center justify-between gap-2">
+                          <div>
+                            <p
+                              className={cn(
+                                "font-mono text-lg font-bold tracking-wide",
+                                acc.accent
+                              )}
+                            >
+                              {acc.accountNumber}
+                            </p>
+                            <p className="mt-0.5 text-xs text-muted-foreground">
+                              {acc.holder}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => copyAccount(acc.accountNumber, idx)}
+                            className="shrink-0 rounded-md border border-border bg-background p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                            title="Copy account number"
+                          >
+                            {copiedIdx === idx ? (
+                              <Check className="h-4 w-4 text-emerald-500" />
+                            ) : (
+                              <Copy className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {settings?.paymentInstructions && (
+                    <p className="mt-3 text-xs text-muted-foreground whitespace-pre-line border-t border-border/50 pt-3">
+                      {settings.paymentInstructions}
+                    </p>
                   )}
+                </div>
+
+                {/* Upload Payment Proof */}
+                <div className="rounded-xl border border-border p-5">
+                  <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <Upload className="h-4 w-4 text-brass" />
+                    Payment Proof
+                  </h3>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Upload a screenshot of your transfer confirmation
+                  </p>
+
+                  <div className="mt-4">
+                    {booking.paymentProofUrl ? (
+                      <div className="flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+                        <Check className="h-5 w-5 shrink-0 text-emerald-600" />
+                        <p className="flex-1 text-sm font-medium text-emerald-800">
+                          Payment proof uploaded
+                        </p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            setBooking((prev) => ({
+                              ...prev,
+                              paymentProofUrl: "",
+                            }))
+                          }
+                        >
+                          Replace
+                        </Button>
+                      </div>
+                    ) : (
+                      <label className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed border-border p-6 transition-colors hover:border-brass hover:bg-brass/5">
+                        {uploadingProof ? (
+                          <Loader2 className="h-7 w-7 animate-spin text-brass" />
+                        ) : (
+                          <Upload className="h-7 w-7 text-muted-foreground" />
+                        )}
+                        <span className="text-sm text-muted-foreground">
+                          {uploadingProof
+                            ? "Uploading..."
+                            : "Click to upload screenshot or photo"}
+                        </span>
+                        <span className="text-[11px] text-muted-foreground/60">
+                          JPG, PNG, or WEBP · Max 5 MB
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleUploadProof(file);
+                          }}
+                          disabled={uploadingProof}
+                        />
+                      </label>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
 
-          {/* ─── Submit ─── */}
+          {/* ─── 4. Submit ─── */}
           {booking.paymentProofUrl && (
             <div className="pb-8 animate-in fade-in slide-in-from-top-2">
               <Button

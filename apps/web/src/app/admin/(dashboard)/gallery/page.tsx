@@ -8,7 +8,7 @@ import { ConfirmationDialog } from "@/components/shared/confirmation-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -20,9 +20,9 @@ import {
   Loader2,
   Upload,
   Trash2,
+  Pencil,
   Plus,
   ImageIcon,
-  GripVertical,
 } from "lucide-react";
 
 export default function GalleryManagementPage() {
@@ -30,9 +30,18 @@ export default function GalleryManagementPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [showUpload, setShowUpload] = useState(false);
   const [uploading, setUploading] = useState(false);
+  
+  // Delete state
   const [deleteTarget, setDeleteTarget] = useState<GalleryImage | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  // Edit state
+  const [editTarget, setEditTarget] = useState<GalleryImage | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editOrder, setEditOrder] = useState<number>(0);
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  // Upload state
   const [uploadTitle, setUploadTitle] = useState("");
   const [uploadFile, setUploadFile] = useState<File | null>(null);
 
@@ -69,6 +78,29 @@ export default function GalleryManagementPage() {
       // Error handled by API client
     } finally {
       setUploading(false);
+    }
+  }
+
+  function startEditing(img: GalleryImage) {
+    setEditTarget(img);
+    setEditTitle(img.title ?? "");
+    setEditOrder(img.displayOrder ?? 0);
+  }
+
+  async function handleEditSave() {
+    if (!editTarget) return;
+    setSavingEdit(true);
+    try {
+      await api.put(`/admin/gallery/${editTarget.imageId}`, {
+        title: editTitle.trim() || null,
+        display_order: editOrder,
+      });
+      setEditTarget(null);
+      await fetchImages();
+    } catch {
+      // Error handled by API client
+    } finally {
+      setSavingEdit(false);
     }
   }
 
@@ -122,28 +154,45 @@ export default function GalleryManagementPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {images.map((image) => (
-            <Card key={image.imageId} className="overflow-hidden">
+            <Card key={image.imageId} className="overflow-hidden group">
               <div className="relative aspect-square">
                 <Image
                   src={image.imageUrl}
                   alt={image.title ?? "Gallery image"}
                   fill
-                  className="object-cover"
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                 />
               </div>
               <CardContent className="flex items-center justify-between p-3">
-                <p className="text-sm font-medium truncate">
-                  {image.title ?? "Untitled"}
-                </p>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setDeleteTarget(image)}
-                  className="shrink-0 text-muted-foreground hover:text-red-600"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                <div className="truncate pr-2">
+                  <p className="text-sm font-medium truncate">
+                    {image.title ?? "Untitled"}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Order: {image.displayOrder}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => startEditing(image)}
+                    className="shrink-0 text-muted-foreground hover:text-foreground"
+                    title="Edit Title & Order"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setDeleteTarget(image)}
+                    className="shrink-0 text-muted-foreground hover:text-red-600"
+                    title="Delete Image"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))}
@@ -221,6 +270,60 @@ export default function GalleryManagementPage() {
                 </>
               ) : (
                 "Upload"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={editTarget !== null} onOpenChange={(open) => {
+        if (!open) setEditTarget(null);
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Gallery Image</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="editTitle">Title / Caption</Label>
+              <Input
+                id="editTitle"
+                placeholder="e.g. Fade Cut"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="editOrder">Display Order</Label>
+              <Input
+                id="editOrder"
+                type="number"
+                value={editOrder}
+                onChange={(e) => setEditOrder(parseInt(e.target.value) || 0)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setEditTarget(null)}
+              disabled={savingEdit}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleEditSave}
+              disabled={savingEdit}
+              className="bg-brass text-brand hover:bg-brass-light"
+            >
+              {savingEdit ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Changes"
               )}
             </Button>
           </DialogFooter>

@@ -38,6 +38,19 @@ export async function uploadGalleryImage(
   };
 }
 
+export async function uploadContentImage(
+  file: Express.Multer.File
+): Promise<{ url: string; public_id: string }> {
+  validateFile(file);
+
+  const result = await uploadToCloudinary(file.buffer, "content");
+
+  return {
+    url: result.secure_url,
+    public_id: result.public_id,
+  };
+}
+
 export async function deleteImage(publicId: string): Promise<void> {
   await cloudinary.uploader.destroy(publicId);
 }

@@ -18,6 +18,7 @@ publicRouter.get("/", galleryController.getAllImages);
 
 // Admin
 adminRouter.use(requireAuth);
+adminRouter.get("/", galleryController.getAllImages);
 adminRouter.post("/", upload.single("image"), galleryController.uploadImage);
 adminRouter.put(
   "/:id",

@@ -23,6 +23,10 @@ export const businessSettings = mysqlTable("business_settings", {
     .$type<number[]>()
     .default([1, 2, 3, 4, 5, 6]),
   paymentInstructions: text("payment_instructions"),
+  cbeAccount: varchar("cbe_account", { length: 50 }),
+  telebirrAccount: varchar("telebirr_account", { length: 50 }),
+  accountHolder: varchar("account_holder", { length: 100 }),
+  bookingPolicy: text("booking_policy"),
   contactPhone: varchar("contact_phone", { length: 20 }),
   contactEmail: varchar("contact_email", { length: 100 }),
   address: text("address"),

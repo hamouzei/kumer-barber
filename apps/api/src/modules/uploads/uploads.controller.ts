@@ -14,3 +14,16 @@ export async function uploadPaymentProof(
   const result = await uploadsService.uploadPaymentProof(file);
   res.status(201).json({ url: result.url });
 }
+
+export async function uploadContentImage(
+  req: Request,
+  res: Response
+): Promise<void> {
+  const file = req.file;
+  if (!file) {
+    throw new ValidationError("No file provided");
+  }
+
+  const result = await uploadsService.uploadContentImage(file);
+  res.status(201).json({ url: result.url });
+}

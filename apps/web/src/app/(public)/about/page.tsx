@@ -1,19 +1,48 @@
-import { Scissors, Award, Heart } from "lucide-react";
+"use client";
 
-export const metadata = {
-  title: "About Us",
-  description:
-    "Learn about 360 Yabu — our story, mission, and commitment to premium grooming.",
-};
+import { useState, useEffect } from "react";
+import Image from "next/image";
+import { Scissors, Award, Heart, Loader2 } from "lucide-react";
+import { api } from "@/lib/api-client";
+
+interface ContentSectionData {
+  title?: string;
+  body?: string;
+  imageUrl?: string;
+  [key: string]: unknown;
+}
 
 export default function AboutPage() {
+  const [aboutContent, setAboutContent] = useState<ContentSectionData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    api
+      .get<Record<string, ContentSectionData>>("/content")
+      .then((res) => {
+        if (res.about) {
+          setAboutContent(res.about);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  const title = aboutContent?.title || "About Us";
+  const bodyText =
+    aboutContent?.body ||
+    `At 360 Yabu, we believe that a great haircut is more than just a trim — it's an experience. Founded with a passion for precision and a commitment to quality, we deliver premium grooming services that leave our clients feeling confident and refreshed.
+
+Our approach combines time-honored barbering techniques with modern styling trends. Whether you're looking for a classic cut, a sharp fade, or a complete style transformation, we bring dedication and attention to detail to every client.`;
+  const imageUrl = (aboutContent?.imageUrl as string) || "";
+
   return (
     <div className="page-transition">
       {/* Hero */}
       <section className="bg-brand py-20">
         <div className="mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
           <h1 className="font-heading text-4xl font-bold tracking-tight text-linen sm:text-5xl">
-            About Us
+            {title}
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-linen/60">
             Where precision meets passion. Every cut tells a story.
@@ -21,28 +50,31 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Story */}
+      {/* Story & Optional Image */}
       <section className="py-16">
-        <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-          <div className="space-y-6 text-base leading-relaxed text-muted-foreground">
-            <p>
-              At <strong className="text-foreground">360 Yabu</strong>, we believe
-              that a great haircut is more than just a trim — it&apos;s an experience.
-              Founded with a passion for precision and a commitment to quality, we
-              have been delivering premium grooming services that leave our clients
-              feeling confident and refreshed.
-            </p>
-            <p>
-              Our approach combines time-honored barbering techniques with modern
-              styling trends. Whether you&apos;re looking for a classic cut, a sharp
-              fade, or a complete style transformation, we bring the same level of
-              dedication and attention to detail to every client.
-            </p>
-            <p>
-              We take pride in creating a welcoming atmosphere where you can relax,
-              unwind, and leave looking your absolute best.
-            </p>
-          </div>
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+          {isLoading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-brass" />
+            </div>
+          ) : (
+            <div className="flex flex-col gap-10 lg:flex-row lg:items-center">
+              {imageUrl && (
+                <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden rounded-2xl border border-border bg-muted shadow-md lg:w-1/2">
+                  <Image
+                    src={imageUrl}
+                    alt={title}
+                    fill
+                    className="object-cover"
+                    priority
+                  />
+                </div>
+              )}
+              <div className="flex-1 space-y-4 text-base leading-relaxed text-muted-foreground whitespace-pre-line">
+                {bodyText}
+              </div>
+            </div>
+          )}
         </div>
       </section>
 

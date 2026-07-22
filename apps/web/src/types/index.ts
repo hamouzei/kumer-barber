@@ -9,6 +9,10 @@ export interface BusinessSettings {
   closingTime: string;
   workingDays: number[];
   paymentInstructions: string | null;
+  cbeAccount?: string | null;
+  telebirrAccount?: string | null;
+  accountHolder?: string | null;
+  bookingPolicy?: string | null;
   contactPhone: string | null;
   contactEmail: string | null;
   address: string | null;

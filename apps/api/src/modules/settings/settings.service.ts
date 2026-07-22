@@ -44,6 +44,14 @@ export async function updateSettings(dto: UpdateSettingsDto) {
     updates.workingDays = dto.working_days;
   if (dto.payment_instructions !== undefined)
     updates.paymentInstructions = dto.payment_instructions;
+  if (dto.cbe_account !== undefined)
+    updates.cbeAccount = dto.cbe_account;
+  if (dto.telebirr_account !== undefined)
+    updates.telebirrAccount = dto.telebirr_account;
+  if (dto.account_holder !== undefined)
+    updates.accountHolder = dto.account_holder;
+  if (dto.booking_policy !== undefined)
+    updates.bookingPolicy = dto.booking_policy;
   if (dto.contact_phone !== undefined)
     updates.contactPhone = dto.contact_phone;
   if (dto.contact_email !== undefined)

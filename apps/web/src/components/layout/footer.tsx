@@ -1,6 +1,11 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Scissors, Camera, MessageCircle, Phone, Mail, MapPin } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { api } from "@/lib/api-client";
+import type { BusinessSettings } from "@/types";
 
 interface FooterProps {
   contactPhone?: string | null;
@@ -10,17 +15,33 @@ interface FooterProps {
 }
 
 export function Footer({
-  contactPhone,
-  contactEmail,
-  address,
-  socialLinks,
+  contactPhone: propPhone,
+  contactEmail: propEmail,
+  address: propAddress,
+  socialLinks: propSocials,
 }: FooterProps) {
   const currentYear = new Date().getFullYear();
+  const [settings, setSettings] = useState<BusinessSettings | null>(null);
+
+  useEffect(() => {
+    // If props are missing, fetch settings automatically
+    if (!propPhone && !propEmail && !propAddress && !propSocials) {
+      api
+        .get<BusinessSettings>("/settings")
+        .then(setSettings)
+        .catch(() => {});
+    }
+  }, [propPhone, propEmail, propAddress, propSocials]);
+
+  const phone = propPhone ?? settings?.contactPhone;
+  const email = propEmail ?? settings?.contactEmail;
+  const address = propAddress ?? settings?.address;
+  const socials = propSocials ?? settings?.socialLinks;
 
   const hasSocials =
-    socialLinks &&
-    Object.values(socialLinks).some((v) => v && v.trim().length > 0);
-  const hasContact = contactPhone || contactEmail || address;
+    socials &&
+    Object.values(socials).some((v) => v && v.trim().length > 0);
+  const hasContact = phone || email || address;
 
   return (
     <footer className="border-t border-border bg-brand text-linen/80">
@@ -53,6 +74,7 @@ export function Footer({
                 { href: "/gallery", label: "Gallery" },
                 { href: "/team", label: "Meet the Barber" },
                 { href: "/book", label: "Book an Appointment" },
+                { href: "/book/status", label: "Check Booking Status" },
               ].map((link) => (
                 <Link
                   key={link.href}
@@ -72,22 +94,22 @@ export function Footer({
                 Contact
               </h3>
               <div className="flex flex-col gap-3">
-                {contactPhone && (
+                {phone && (
                   <a
-                    href={`tel:${contactPhone}`}
+                    href={`tel:${phone}`}
                     className="flex items-center gap-2 text-sm text-linen/60 transition-colors hover:text-brass"
                   >
                     <Phone className="h-4 w-4 shrink-0" />
-                    {contactPhone}
+                    {phone}
                   </a>
                 )}
-                {contactEmail && (
+                {email && (
                   <a
-                    href={`mailto:${contactEmail}`}
+                    href={`mailto:${email}`}
                     className="flex items-center gap-2 text-sm text-linen/60 transition-colors hover:text-brass"
                   >
                     <Mail className="h-4 w-4 shrink-0" />
-                    {contactEmail}
+                    {email}
                   </a>
                 )}
                 {address && (
@@ -100,9 +122,9 @@ export function Footer({
 
               {hasSocials && (
                 <div className="flex gap-3 pt-2">
-                  {socialLinks?.instagram && (
+                  {socials?.instagram && (
                     <a
-                      href={socialLinks.instagram}
+                      href={socials.instagram}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-linen/40 transition-colors hover:text-brass"
@@ -111,9 +133,9 @@ export function Footer({
                       <Camera className="h-5 w-5" />
                     </a>
                   )}
-                  {socialLinks?.telegram && (
+                  {socials?.telegram && (
                     <a
-                      href={socialLinks.telegram}
+                      href={socials.telegram}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-linen/40 transition-colors hover:text-brass"

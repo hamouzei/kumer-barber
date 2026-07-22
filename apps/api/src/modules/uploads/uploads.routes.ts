@@ -15,4 +15,10 @@ router.post(
   uploadsController.uploadPaymentProof
 );
 
+router.post(
+  "/content-image",
+  upload.single("image"),
+  uploadsController.uploadContentImage
+);
+
 export { router as uploadRoutes };
