@@ -4,9 +4,15 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Scissors, Clock, Shield, Award } from "lucide-react";
+import {
+  ArrowRight,
+  Scissors,
+  Clock,
+  Shield,
+  ChevronRight,
+} from "lucide-react";
 import { api } from "@/lib/api-client";
-import type { BusinessSettings } from "@/types";
+import type { BusinessSettings, GalleryImage } from "@/types";
 import { BarbershopMap } from "@/components/shared/barbershop-map";
 
 interface ContentSectionData {
@@ -15,65 +21,95 @@ interface ContentSectionData {
   [key: string]: unknown;
 }
 
+const SERVICE_HIGHLIGHTS = [
+  {
+    icon: Scissors,
+    title: "Master-Level Precision",
+    description:
+      "Fades, lineups, classic cuts — every stroke deliberate, every edge clean. We study your features and cut to complement them.",
+  },
+  {
+    icon: Clock,
+    title: "Book in Under a Minute",
+    description:
+      "Pick your date, choose a time, confirm. No calls, no waiting. Your slot is secured the moment you hit submit.",
+  },
+  {
+    icon: Shield,
+    title: "The Full Experience",
+    description:
+      "Hot towels, premium oils, razor-clean edges. Every visit is designed to be the best part of your week.",
+  },
+];
+
 export default function HomePage() {
-  const [heroContent, setHeroContent] = useState<ContentSectionData | null>(null);
+  const [heroContent, setHeroContent] = useState<ContentSectionData | null>(
+    null
+  );
   const [settings, setSettings] = useState<BusinessSettings | null>(null);
+  const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
 
   useEffect(() => {
     Promise.all([
-      api.get<Record<string, ContentSectionData>>("/content").catch(() => null),
+      api
+        .get<Record<string, ContentSectionData>>("/content")
+        .catch(() => null),
       api.get<BusinessSettings>("/settings").catch(() => null),
-    ]).then(([contentRes, settingsRes]) => {
+      api.get<GalleryImage[]>("/gallery").catch(() => []),
+    ]).then(([contentRes, settingsRes, images]) => {
       if (contentRes?.hero) setHeroContent(contentRes.hero);
       if (settingsRes) setSettings(settingsRes);
+      if (images) setGalleryImages(images.slice(0, 6));
     });
   }, []);
 
-  const headline = heroContent?.title || "Look Sharp. Every Single Time.";
+  const headline = heroContent?.title || "Look Sharp.\nEvery Single Time.";
   const description =
     heroContent?.body ||
-    "Experience precision haircuts, hot towel shaves, and top-tier grooming tailored to your style. Book your session online and walk out looking your absolute best.";
-  const shopAddress = settings?.address || "Bole, Addis Ababa";
+    "Precision haircuts, hot towel shaves, and top-tier grooming tailored to your style. Walk out looking your absolute best.";
+  const shopAddress = settings?.address || "Addis Ababa, Ethiopia";
 
   return (
     <div className="page-transition">
-      {/* Hero Section - Matching the clean style of About, Team, and Gallery sections */}
-      <section className="bg-brand py-20 lg:py-28">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid gap-12 lg:grid-cols-12 lg:items-center">
-            
-            {/* Hero Left Content */}
-            <div className="flex flex-col items-start text-left lg:col-span-7 space-y-6">
-              <div className="inline-flex items-center gap-2 rounded-full border border-brass/20 bg-brass/10 px-4 py-1.5">
+      {/* ═══════ HERO ═══════ */}
+      <section className="relative overflow-hidden bg-night">
+        {/* Subtle radial gradient */}
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(200,150,90,0.08),transparent)]" />
+
+        <div className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
+          <div className="grid items-center gap-12 lg:grid-cols-12 lg:gap-16">
+            {/* Left — Text */}
+            <div className="flex flex-col items-start lg:col-span-6 space-y-7">
+              <div className="inline-flex items-center gap-2 rounded-full border border-brass/20 bg-brass/8 px-4 py-1.5">
                 <Scissors className="h-3.5 w-3.5 text-brass" />
-                <span className="text-xs font-semibold tracking-wider text-brass uppercase">
-                  Premium Barbering Experience
+                <span className="text-[11px] font-semibold tracking-[0.15em] text-brass uppercase">
+                  360 Yabu Barber Studio
                 </span>
               </div>
 
-              <h1 className="font-heading text-4xl font-bold tracking-tight text-linen sm:text-5xl lg:text-6xl leading-tight">
+              <h1 className="font-heading text-4xl font-bold tracking-tight text-ivory sm:text-5xl lg:text-[3.5rem] lg:leading-[1.1] whitespace-pre-line anim-fade-up">
                 {headline}
               </h1>
 
-              <p className="max-w-xl text-lg text-linen/70 leading-relaxed font-sans whitespace-pre-line">
+              <p className="max-w-lg text-base text-ivory/50 leading-relaxed font-sans whitespace-pre-line anim-fade-up anim-delay-1">
                 {description}
               </p>
 
-              <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto pt-2">
+              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto pt-1 anim-fade-up anim-delay-2">
                 <Link href="/book" className="w-full sm:w-auto">
                   <Button
                     size="lg"
-                    className="w-full sm:w-auto bg-brass text-brand hover:bg-brass-light font-semibold text-base px-8 h-12"
+                    className="w-full sm:w-auto bg-brass text-night hover:bg-brass-light font-semibold text-sm px-7 h-12 gap-2"
                   >
                     Book Appointment
-                    <ArrowRight className="ml-2 h-4 w-4" />
+                    <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
                 <Link href="/gallery" className="w-full sm:w-auto">
                   <Button
                     size="lg"
                     variant="outline"
-                    className="w-full sm:w-auto border-linen/20 text-linen hover:bg-linen/10 text-base px-8 h-12"
+                    className="w-full sm:w-auto border-ivory/15 text-ivory hover:bg-ivory/5 text-sm px-7 h-12"
                   >
                     View Our Work
                   </Button>
@@ -81,10 +117,12 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Hero Right Image Card */}
-            <div className="lg:col-span-5 flex justify-center lg:justify-end">
-              <div className="relative w-full max-w-md aspect-[4/5] rounded-2xl border border-brass/20 bg-brand p-3 shadow-xl overflow-hidden">
-                <div className="relative h-full w-full rounded-xl overflow-hidden bg-black">
+            {/* Right — Hero Image */}
+            <div className="lg:col-span-6 flex justify-center lg:justify-end anim-fade-up anim-delay-2">
+              <div className="relative w-full max-w-md aspect-[4/5] rounded-2xl overflow-hidden">
+                {/* Brass frame accent */}
+                <div className="absolute -inset-px rounded-2xl border border-brass/15 z-10 pointer-events-none" />
+                <div className="absolute inset-0 rounded-2xl overflow-hidden">
                   <Image
                     src="/images/barber-hero.png"
                     alt="360 Yabu Barber Studio"
@@ -93,62 +131,55 @@ export default function HomePage() {
                     priority
                     className="object-cover"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-brand/80 via-transparent to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-night/70 via-night/10 to-transparent" />
                 </div>
 
-                <div className="absolute bottom-6 left-6 right-6 z-10 flex items-center justify-between rounded-lg border border-linen/15 bg-brand/90 px-4 py-3 shadow-md backdrop-blur-sm">
-                  <div className="flex items-center gap-2.5">
-                    <div className="flex h-7 w-7 items-center justify-center rounded bg-brass/20">
-                      <Award className="h-4 w-4 text-brass" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-linen">360 Yabu Barber Studio</p>
-                      <p className="text-[10px] text-linen/60">{shopAddress}</p>
-                    </div>
+                {/* Overlay badge */}
+                <div className="absolute bottom-5 left-5 right-5 z-10 flex items-center gap-3 rounded-xl border border-ivory/10 bg-night/80 px-4 py-3 backdrop-blur-md">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brass/15">
+                    <Scissors className="h-4 w-4 text-brass" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-ivory">
+                      360 Yabu Barber
+                    </p>
+                    <p className="text-[11px] text-ivory/45">{shopAddress}</p>
                   </div>
                 </div>
               </div>
             </div>
-
           </div>
         </div>
       </section>
 
-      {/* Value Props Section */}
-      <section className="border-b border-border bg-linen py-16">
+      {/* ═══════ SERVICE HIGHLIGHTS ═══════ */}
+      <section className="py-20 bg-background">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid gap-8 sm:grid-cols-3">
-            {[
-              {
-                icon: Scissors,
-                title: "Expert Craftsmanship",
-                description:
-                  "Years of refining the blade craft, offering master-level precision cuts matched uniquely to your style.",
-              },
-              {
-                icon: Clock,
-                title: "Easy Online Booking",
-                description:
-                  "Select your date, choose your time slot, and confirm your session in seconds with zero friction.",
-              },
-              {
-                icon: Shield,
-                title: "Premium Grooming Experience",
-                description:
-                  "Top-shelf oils, razor-clean blades, and relaxing hot towels. Every detail curated for your comfort.",
-              },
-            ].map((item) => (
+          <div className="text-center mb-14">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brass mb-3">
+              Why Choose Us
+            </p>
+            <h2 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">
+              Craftsmanship You Can Feel
+            </h2>
+          </div>
+
+          <div className="grid gap-6 sm:grid-cols-3">
+            {SERVICE_HIGHLIGHTS.map((item, idx) => (
               <div
                 key={item.title}
-                className="flex flex-col items-center text-center p-6 rounded-xl border border-border bg-background shadow-sm"
+                className={`group relative rounded-2xl border border-border bg-card p-7 transition-all duration-300 hover:brass-glow hover:border-brass/20 anim-fade-up anim-delay-${idx + 1}`}
               >
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brass/10 border border-brass/20 mb-4">
+                {/* Brass left accent */}
+                <div className="absolute left-0 top-6 bottom-6 w-0.5 rounded-full bg-brass/30 group-hover:bg-brass transition-colors duration-300" />
+
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brass/8 mb-5">
                   <item.icon className="h-5 w-5 text-brass" />
                 </div>
-                <h3 className="font-heading text-lg font-bold text-foreground">
+                <h3 className="font-heading text-lg font-bold mb-2">
                   {item.title}
                 </h3>
-                <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                <p className="text-sm text-muted-foreground leading-relaxed">
                   {item.description}
                 </p>
               </div>
@@ -157,8 +188,69 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Barbershop Map & Directions Section */}
-      <section className="py-16">
+      {/* ═══════ GALLERY PREVIEW ═══════ */}
+      {galleryImages.length > 0 && (
+        <section className="py-20 bg-night">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="flex items-end justify-between mb-10">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brass mb-3">
+                  Our Work
+                </p>
+                <h2 className="font-heading text-3xl font-bold tracking-tight text-ivory sm:text-4xl">
+                  Recent Cuts
+                </h2>
+              </div>
+              <Link
+                href="/gallery"
+                className="hidden sm:flex items-center gap-1.5 text-sm font-medium text-brass hover:text-brass-light transition-colors"
+              >
+                View all
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
+
+            <div className="grid gap-3 grid-cols-2 lg:grid-cols-3">
+              {galleryImages.map((image, idx) => (
+                <Link
+                  key={image.imageId}
+                  href="/gallery"
+                  className={`group relative aspect-square overflow-hidden rounded-xl bg-ash anim-fade-up anim-delay-${Math.min(idx + 1, 5)}`}
+                >
+                  <Image
+                    src={image.imageUrl}
+                    alt={image.title ?? "Gallery image"}
+                    fill
+                    className="object-cover transition-all duration-500 group-hover:scale-105"
+                    sizes="(max-width: 640px) 50vw, 33vw"
+                  />
+                  <div className="absolute inset-0 bg-night/0 group-hover:bg-night/30 transition-all duration-300" />
+                  {image.title && (
+                    <div className="absolute inset-x-0 bottom-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                      <p className="text-sm font-medium text-ivory">
+                        {image.title}
+                      </p>
+                    </div>
+                  )}
+                </Link>
+              ))}
+            </div>
+
+            <div className="mt-8 text-center sm:hidden">
+              <Link
+                href="/gallery"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-brass hover:text-brass-light transition-colors"
+              >
+                View all work
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ═══════ LOCATION ═══════ */}
+      <section className="py-20 bg-background">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <BarbershopMap
             address={settings?.address}
@@ -170,24 +262,27 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CTA Strip Section */}
-      <section className="bg-brand py-20 text-center border-t border-border">
-        <div className="mx-auto flex max-w-7xl flex-col items-center gap-6 px-4 sm:px-6 lg:px-8">
-          <h2 className="font-heading text-3xl font-bold tracking-tight text-linen sm:text-4xl">
-            Ready for a Fresh Look?
-          </h2>
-          <p className="max-w-md text-linen/60 text-sm sm:text-base leading-relaxed">
-            Reserve your session at {shopAddress}&apos;s premier grooming studio and get the sharp look you deserve today.
-          </p>
-          <Link href="/book" className="mt-2">
-            <Button
-              size="lg"
-              className="bg-brass text-brand hover:bg-brass-light font-semibold text-base px-10 h-12"
-            >
-              Book Now
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </Link>
+      {/* ═══════ CTA STRIP ═══════ */}
+      <section className="bg-night py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col items-center text-center gap-6">
+            <h2 className="font-heading text-3xl font-bold tracking-tight text-ivory sm:text-5xl max-w-xl anim-fade-up">
+              Ready for a Fresh Look?
+            </h2>
+            <p className="max-w-md text-ivory/40 text-sm sm:text-base leading-relaxed anim-fade-up anim-delay-1">
+              Reserve your session and get the sharp look you deserve. Book
+              online in seconds.
+            </p>
+            <Link href="/book" className="mt-2 anim-fade-up anim-delay-2">
+              <Button
+                size="lg"
+                className="bg-brass text-night hover:bg-brass-light font-semibold text-sm px-10 h-13 gap-2"
+              >
+                Book Now
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
     </div>

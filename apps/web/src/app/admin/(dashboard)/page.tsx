@@ -12,11 +12,9 @@ import {
   Clock,
   Users,
   DollarSign,
-  ClipboardList,
   ArrowRight,
   Loader2,
   CheckCircle,
-  XCircle,
 } from "lucide-react";
 
 export default function AdminDashboardPage() {
@@ -52,25 +50,29 @@ export default function AdminDashboardPage() {
       label: "Today's Appointments",
       value: data.todayAppointments,
       icon: CalendarDays,
-      color: "text-blue-600 bg-blue-100",
+      iconColor: "text-blue-600 dark:text-blue-400",
+      iconBg: "bg-blue-100 dark:bg-blue-900/30",
     },
     {
       label: "Pending Bookings",
       value: data.pendingBookings,
       icon: Clock,
-      color: "text-amber-600 bg-amber-100",
+      iconColor: "text-amber-600 dark:text-amber-400",
+      iconBg: "bg-amber-100 dark:bg-amber-900/30",
     },
     {
       label: "Completed Today",
       value: data.completedToday,
       icon: CheckCircle,
-      color: "text-emerald-600 bg-emerald-100",
+      iconColor: "text-emerald-600 dark:text-emerald-400",
+      iconBg: "bg-emerald-100 dark:bg-emerald-900/30",
     },
     {
       label: "Monthly Revenue",
       value: `${data.monthlyRevenue.toLocaleString()} ETB`,
       icon: DollarSign,
-      color: "text-brass bg-brass/10",
+      iconColor: "text-brass",
+      iconBg: "bg-brass/10",
     },
   ];
 
@@ -90,16 +92,18 @@ export default function AdminDashboardPage() {
         {stats.map((stat) => {
           const Icon = stat.icon;
           return (
-            <Card key={stat.label}>
-              <CardContent className="flex items-center gap-4 p-4">
+            <Card key={stat.label} className="border-border">
+              <CardContent className="flex items-center gap-4 p-5">
                 <div
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${stat.color}`}
+                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${stat.iconBg}`}
                 >
-                  <Icon className="h-5 w-5" />
+                  <Icon className={`h-5 w-5 ${stat.iconColor}`} />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">{stat.label}</p>
-                  <p className="font-heading text-xl font-bold">{stat.value}</p>
+                  <p className="font-heading text-xl font-bold mt-0.5">
+                    {stat.value}
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -108,13 +112,13 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Recent Pending */}
-      <Card>
+      <Card className="border-border">
         <CardHeader className="flex flex-row items-center justify-between pb-3">
           <CardTitle className="text-base font-semibold">
             Recent Pending Bookings
           </CardTitle>
           <Link href="/admin/appointments?status=pending">
-            <Button variant="ghost" size="sm" className="gap-1 text-brass">
+            <Button variant="ghost" size="sm" className="gap-1 text-brass hover:text-brass-light">
               View All
               <ArrowRight className="h-3.5 w-3.5" />
             </Button>
@@ -122,19 +126,24 @@ export default function AdminDashboardPage() {
         </CardHeader>
         <CardContent>
           {data.recentPending.length === 0 ? (
-            <p className="py-6 text-center text-sm text-muted-foreground">
-              No pending bookings
-            </p>
+            <div className="py-8 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted mx-auto mb-3">
+                <CheckCircle className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <p className="text-sm text-muted-foreground">
+                No pending bookings
+              </p>
+            </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {data.recentPending.map((booking) => (
                 <Link
                   key={booking.appointmentId}
                   href={`/admin/appointments/${booking.appointmentId}`}
-                  className="flex items-center justify-between rounded-lg border border-border p-3 transition-colors hover:bg-muted/50"
+                  className="flex items-center justify-between rounded-xl border border-border p-3.5 transition-all hover:bg-muted/50 hover:border-brass/15"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted">
                       <Users className="h-4 w-4 text-muted-foreground" />
                     </div>
                     <div>

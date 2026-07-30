@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Scissors, Award, Heart, Loader2 } from "lucide-react";
 import { api } from "@/lib/api-client";
-import { BarbershopMap } from "@/components/shared/barbershop-map";
 import type { BusinessSettings } from "@/types";
 
 interface ContentSectionData {
@@ -14,14 +13,39 @@ interface ContentSectionData {
   [key: string]: unknown;
 }
 
+const VALUES = [
+  {
+    icon: Scissors,
+    title: "Precision",
+    description:
+      "Every cut is executed with meticulous attention to detail, ensuring clean lines and perfect symmetry.",
+  },
+  {
+    icon: Award,
+    title: "Excellence",
+    description:
+      "We continuously refine our craft, staying current with the latest techniques and trends in men's grooming.",
+  },
+  {
+    icon: Heart,
+    title: "Care",
+    description:
+      "Your comfort and satisfaction are our top priority. We listen, advise, and deliver results you'll love.",
+  },
+];
+
 export default function AboutPage() {
-  const [aboutContent, setAboutContent] = useState<ContentSectionData | null>(null);
+  const [aboutContent, setAboutContent] = useState<ContentSectionData | null>(
+    null
+  );
   const [settings, setSettings] = useState<BusinessSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
-      api.get<Record<string, ContentSectionData>>("/content").catch(() => null),
+      api
+        .get<Record<string, ContentSectionData>>("/content")
+        .catch(() => null),
       api.get<BusinessSettings>("/settings").catch(() => null),
     ])
       .then(([contentRes, settingsRes]) => {
@@ -41,40 +65,57 @@ Our approach combines time-honored barbering techniques with modern styling tren
 
   return (
     <div className="page-transition">
-      {/* Hero */}
-      <section className="bg-brand py-20">
-        <div className="mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
-          <h1 className="font-heading text-4xl font-bold tracking-tight text-linen sm:text-5xl">
-            {title}
-          </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-lg text-linen/60">
-            Where precision meets passion. Every cut tells a story.
-          </p>
+      {/* Header */}
+      <section className="bg-night py-16 lg:py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="max-w-2xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brass mb-3 anim-fade-up">
+              Our Story
+            </p>
+            <h1 className="font-heading text-4xl font-bold tracking-tight text-ivory sm:text-5xl anim-fade-up anim-delay-1">
+              {title}
+            </h1>
+            <p className="mt-4 text-base text-ivory/45 leading-relaxed anim-fade-up anim-delay-2">
+              Where precision meets passion. Every cut tells a story.
+            </p>
+          </div>
         </div>
       </section>
 
-      {/* Story & Optional Image */}
-      <section className="py-16">
-        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+      {/* Story & Image */}
+      <section className="py-20 bg-background">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {isLoading ? (
             <div className="flex justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-brass" />
             </div>
           ) : (
-            <div className="flex flex-col gap-10 lg:flex-row lg:items-center">
+            <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
+              {/* Image */}
               {imageUrl && (
-                <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden rounded-2xl border border-border bg-muted shadow-md lg:w-1/2">
-                  <Image
-                    src={imageUrl}
-                    alt={title}
-                    fill
-                    className="object-cover"
-                    priority
-                  />
+                <div className="relative anim-fade-up">
+                  <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-border shadow-lg">
+                    <Image
+                      src={imageUrl}
+                      alt={title}
+                      fill
+                      className="object-cover"
+                      priority
+                    />
+                  </div>
+                  {/* Decorative accent */}
+                  <div className="absolute -bottom-3 -right-3 h-24 w-24 rounded-2xl border border-brass/20 -z-10" />
                 </div>
               )}
-              <div className="flex-1 space-y-4 text-base leading-relaxed text-muted-foreground whitespace-pre-line">
-                {bodyText}
+
+              {/* Text */}
+              <div
+                className={`space-y-5 anim-fade-up anim-delay-1 ${!imageUrl ? "lg:col-span-2 max-w-3xl" : ""}`}
+              >
+                <div className="h-1 w-12 rounded-full bg-brass" />
+                <div className="text-base leading-relaxed text-muted-foreground whitespace-pre-line">
+                  {bodyText}
+                </div>
               </div>
             </div>
           )}
@@ -82,61 +123,35 @@ Our approach combines time-honored barbering techniques with modern styling tren
       </section>
 
       {/* Values */}
-      <section className="border-t border-border bg-linen py-16">
+      <section className="py-20 bg-night">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <h2 className="text-center font-heading text-2xl font-bold tracking-tight sm:text-3xl">
-            What We Stand For
-          </h2>
-          <div className="mt-12 grid gap-8 sm:grid-cols-3">
-            {[
-              {
-                icon: Scissors,
-                title: "Precision",
-                description:
-                  "Every cut is executed with meticulous attention to detail, ensuring clean lines and perfect symmetry.",
-              },
-              {
-                icon: Award,
-                title: "Excellence",
-                description:
-                  "We continuously refine our craft, staying current with the latest techniques and trends in men's grooming.",
-              },
-              {
-                icon: Heart,
-                title: "Care",
-                description:
-                  "Your comfort and satisfaction are our top priority. We listen, advise, and deliver results you'll love.",
-              },
-            ].map((value) => (
+          <div className="text-center mb-14">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brass mb-3">
+              Our Values
+            </p>
+            <h2 className="font-heading text-3xl font-bold tracking-tight text-ivory sm:text-4xl">
+              What We Stand For
+            </h2>
+          </div>
+
+          <div className="grid gap-6 sm:grid-cols-3">
+            {VALUES.map((value, idx) => (
               <div
                 key={value.title}
-                className="flex flex-col items-center gap-4 rounded-lg border border-border bg-background p-8 text-center shadow-sm"
+                className={`group rounded-2xl border border-ivory/8 bg-ash p-7 transition-all duration-300 hover:border-brass/20 hover:brass-glow anim-fade-up anim-delay-${idx + 1}`}
               >
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brass/10">
-                  <value.icon className="h-6 w-6 text-brass" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brass/10 mb-5 group-hover:bg-brass/15 transition-colors">
+                  <value.icon className="h-5 w-5 text-brass" />
                 </div>
-                <h3 className="font-heading text-lg font-semibold">
+                <h3 className="font-heading text-lg font-bold text-ivory mb-2">
                   {value.title}
                 </h3>
-                <p className="text-sm leading-relaxed text-muted-foreground">
+                <p className="text-sm leading-relaxed text-ivory/50">
                   {value.description}
                 </p>
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* Location & Directions Map */}
-      <section className="py-16">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <BarbershopMap
-            address={settings?.address}
-            googleMapsUrl={settings?.googleMapsUrl}
-            contactPhone={settings?.contactPhone}
-            openingTime={settings?.openingTime}
-            closingTime={settings?.closingTime}
-          />
         </div>
       </section>
     </div>

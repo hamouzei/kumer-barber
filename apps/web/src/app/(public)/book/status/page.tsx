@@ -18,9 +18,14 @@ import {
   Copy,
   Check,
   Search,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  TimerOff,
+  Ban,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-/** Convert "HH:MM" (24h) → "h:MM AM/PM" (12h) */
 function to12Hour(time24: string): string {
   if (!time24) return "";
   const [hStr, mStr] = time24.split(":");
@@ -32,11 +37,68 @@ function to12Hour(time24: string): string {
   return `${h}:${mStr} ${suffix}`;
 }
 
+const STATUS_CONFIG: Record<
+  string,
+  {
+    title: string;
+    message: string;
+    icon: React.ElementType;
+    color: string;
+    bg: string;
+  }
+> = {
+  pending: {
+    title: "Booking Submitted",
+    message:
+      "Your booking request has been received. We will review your payment and confirm shortly.",
+    icon: Clock,
+    color: "text-amber-600 dark:text-amber-400",
+    bg: "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800/40",
+  },
+  approved: {
+    title: "Booking Confirmed",
+    message:
+      "Your appointment has been approved. See you at the scheduled time!",
+    icon: CheckCircle,
+    color: "text-emerald-600 dark:text-emerald-400",
+    bg: "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800/40",
+  },
+  rejected: {
+    title: "Booking Declined",
+    message:
+      "Unfortunately, your booking could not be approved. Please contact us for more details or try booking again.",
+    icon: XCircle,
+    color: "text-red-600 dark:text-red-400",
+    bg: "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800/40",
+  },
+  completed: {
+    title: "Visit Complete",
+    message: "Thank you for visiting! We hope to see you again soon.",
+    icon: CheckCircle,
+    color: "text-emerald-600 dark:text-emerald-400",
+    bg: "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800/40",
+  },
+  cancelled: {
+    title: "Booking Cancelled",
+    message: "This booking has been cancelled.",
+    icon: Ban,
+    color: "text-muted-foreground",
+    bg: "bg-muted border-border",
+  },
+  expired: {
+    title: "Booking Expired",
+    message: "This booking has expired. Please create a new booking.",
+    icon: TimerOff,
+    color: "text-muted-foreground",
+    bg: "bg-muted border-border",
+  },
+};
+
 function BookingStatusContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const bookingRef = searchParams.get("ref");
-  
+
   const [booking, setBooking] = useState<BookingStatus | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -85,37 +147,6 @@ function BookingStatusContent() {
     router.push(`/book/status?ref=${lookupRef.trim().toUpperCase()}`);
   }
 
-  const statusMessages: Record<string, { title: string; message: string }> = {
-    pending: {
-      title: "Booking Submitted!",
-      message:
-        "Your booking request has been received. We will review your payment and confirm shortly.",
-    },
-    approved: {
-      title: "Booking Confirmed!",
-      message:
-        "Your appointment has been approved. See you at the scheduled time!",
-    },
-    rejected: {
-      title: "Booking Declined",
-      message:
-        "Unfortunately, your booking could not be approved. Please contact us for more details or try booking again.",
-    },
-    completed: {
-      title: "Visit Complete",
-      message: "Thank you for visiting! We hope to see you again soon.",
-    },
-    cancelled: {
-      title: "Booking Cancelled",
-      message: "This booking has been cancelled.",
-    },
-    expired: {
-      title: "Booking Expired",
-      message: "This booking has expired. Please create a new booking.",
-    },
-  };
-
-  // If loading and we have a ref param
   if (isLoading && bookingRef) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
@@ -124,48 +155,47 @@ function BookingStatusContent() {
     );
   }
 
-  // Direct landing or no booking ref provided: Show Lookup Form
+  /* ── Lookup Form (no ref provided) ── */
   if (!bookingRef) {
     return (
-      <div className="page-transition animate-in fade-in duration-300">
-        <section className="bg-brand py-12">
+      <div className="page-transition">
+        <section className="bg-night py-12">
           <div className="mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
-            <h1 className="font-heading text-3xl font-bold tracking-tight text-linen sm:text-4xl">
+            <h1 className="font-heading text-3xl font-bold tracking-tight text-ivory sm:text-4xl">
               Check Booking Status
             </h1>
-            <p className="mt-2 text-sm text-linen/60">
+            <p className="mt-2 text-sm text-ivory/45">
               Track the approval status of your appointment reservation
             </p>
           </div>
         </section>
 
-        <section className="py-12">
+        <section className="py-14">
           <div className="mx-auto max-w-md px-4 sm:px-6">
-            <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-4">
+            <div className="rounded-2xl border border-border bg-card p-7 shadow-sm space-y-5 anim-fade-up">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brass/10 mx-auto">
+                <Search className="h-5 w-5 text-brass" />
+              </div>
               <form onSubmit={handleLookupSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="lookupRef" className="text-sm font-medium">
                     Booking Reference Code
                   </Label>
-                  <div className="relative">
-                    <Input
-                      id="lookupRef"
-                      placeholder="e.g. YBU-8LV427"
-                      value={lookupRef}
-                      onChange={(e) => setLookupRef(e.target.value)}
-                      className="pr-10 uppercase font-mono"
-                    />
-                    <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  </div>
-                  <p className="text-xs text-muted-foreground leading-normal">
-                    Enter the unique booking reference code provided when you completed your booking.
+                  <Input
+                    id="lookupRef"
+                    placeholder="e.g. YBU-8LV427"
+                    value={lookupRef}
+                    onChange={(e) => setLookupRef(e.target.value)}
+                    className="uppercase font-mono h-11 text-center text-lg tracking-wider"
+                  />
+                  <p className="text-xs text-muted-foreground leading-normal text-center">
+                    Enter the reference code from your booking confirmation.
                   </p>
                 </div>
-
                 <Button
                   type="submit"
                   disabled={!lookupRef.trim()}
-                  className="w-full bg-brass text-brand hover:bg-brass-light font-semibold"
+                  className="w-full bg-brass text-night hover:bg-brass-light font-semibold h-11"
                 >
                   Check Status
                 </Button>
@@ -177,22 +207,25 @@ function BookingStatusContent() {
     );
   }
 
-  // Error case (not found)
+  /* ── Not Found ── */
   if (error || !booking) {
     return (
-      <div className="page-transition animate-in fade-in duration-300">
-        <section className="bg-brand py-12">
+      <div className="page-transition">
+        <section className="bg-night py-12">
           <div className="mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
-            <h1 className="font-heading text-3xl font-bold tracking-tight text-linen sm:text-4xl">
+            <h1 className="font-heading text-3xl font-bold tracking-tight text-ivory sm:text-4xl">
               Booking Not Found
             </h1>
           </div>
         </section>
-        <section className="py-12">
-          <div className="mx-auto max-w-md px-4 sm:px-6 text-center space-y-4">
-            <div className="rounded-xl border border-red-200 bg-red-50 p-6">
-              <p className="text-sm font-medium text-red-800">{error || "Something went wrong."}</p>
+        <section className="py-14">
+          <div className="mx-auto max-w-md px-4 sm:px-6 text-center space-y-5 anim-fade-up">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-100 dark:bg-red-950/40 mx-auto">
+              <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
             </div>
+            <p className="text-sm text-muted-foreground">
+              {error || "Something went wrong."}
+            </p>
             <div className="flex flex-col gap-2">
               <Button
                 variant="outline"
@@ -202,7 +235,7 @@ function BookingStatusContent() {
                 Try Another Code
               </Button>
               <Link href="/book">
-                <Button className="w-full bg-brass text-brand hover:bg-brass-light font-semibold">
+                <Button className="w-full bg-brass text-night hover:bg-brass-light font-semibold">
                   Book New Appointment
                 </Button>
               </Link>
@@ -213,38 +246,46 @@ function BookingStatusContent() {
     );
   }
 
-  const statusInfo = statusMessages[booking.status] ?? {
-    title: "Booking Status",
-    message: "",
-  };
+  /* ── Booking Found ── */
+  const config = STATUS_CONFIG[booking.status] ?? STATUS_CONFIG.pending!;
+  const StatusIcon = config.icon;
 
   return (
-    <div className="page-transition animate-in fade-in duration-300">
-      <section className="bg-brand py-12">
+    <div className="page-transition">
+      {/* Status-colored header band */}
+      <section className="bg-night py-12">
         <div className="mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
-          <h1 className="font-heading text-3xl font-bold tracking-tight text-linen sm:text-4xl">
-            {statusInfo.title}
+          <div
+            className={cn(
+              "inline-flex h-14 w-14 items-center justify-center rounded-full mb-4",
+              config.color
+            )}
+            style={{ background: "rgba(200,150,90,0.1)" }}
+          >
+            <StatusIcon className="h-7 w-7" />
+          </div>
+          <h1 className="font-heading text-3xl font-bold tracking-tight text-ivory sm:text-4xl">
+            {config.title}
           </h1>
         </div>
       </section>
 
-      <section className="py-12">
+      <section className="py-10">
         <div className="mx-auto max-w-lg px-4 sm:px-6">
-          <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-6">
-            
-            {/* Prominent booking reference display + copy button */}
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-6 anim-fade-up">
+            {/* Reference + Badge */}
             <div className="flex items-center justify-between border-b border-border pb-4">
               <div className="space-y-1">
-                <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
+                <span className="text-[10px] text-muted-foreground uppercase tracking-[0.15em] font-semibold">
                   Booking Reference
                 </span>
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-lg font-bold text-foreground tracking-wide">
+                  <span className="font-mono text-lg font-bold tracking-wide">
                     {booking.booking_ref}
                   </span>
                   <button
                     onClick={() => copyToClipboard(booking.booking_ref)}
-                    className="rounded-md p-1.5 border border-border bg-muted/30 text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center"
+                    className="rounded-lg p-1.5 border border-border bg-muted/30 text-muted-foreground hover:text-foreground transition-colors"
                     title="Copy reference code"
                   >
                     {copied ? (
@@ -258,13 +299,17 @@ function BookingStatusContent() {
               <StatusBadge status={booking.status} />
             </div>
 
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              {statusInfo.message}
-            </p>
+            {/* Status message */}
+            <div className={cn("rounded-xl border p-4", config.bg)}>
+              <p className="text-sm leading-relaxed">{config.message}</p>
+            </div>
 
-            <div className="space-y-3 rounded-lg bg-muted/30 p-4 border border-border/50">
+            {/* Appointment details */}
+            <div className="space-y-3 rounded-xl bg-muted/30 p-4 border border-border/50">
               <div className="flex items-center gap-3 text-sm">
-                <CalendarDays className="h-4 w-4 text-brass shrink-0" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brass/10 shrink-0">
+                  <CalendarDays className="h-4 w-4 text-brass" />
+                </div>
                 <span className="font-medium">
                   {new Date(
                     booking.appointment_date + "T00:00:00"
@@ -277,13 +322,16 @@ function BookingStatusContent() {
                 </span>
               </div>
               <div className="flex items-center gap-3 text-sm">
-                <Clock className="h-4 w-4 text-brass shrink-0" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brass/10 shrink-0">
+                  <Clock className="h-4 w-4 text-brass" />
+                </div>
                 <span className="font-medium">
                   {to12Hour(booking.time)}
                 </span>
               </div>
             </div>
 
+            {/* Actions */}
             <div className="flex flex-col gap-3 sm:flex-row pt-2">
               <Button
                 variant="outline"
@@ -301,12 +349,10 @@ function BookingStatusContent() {
                 Check Another Booking
               </Button>
             </div>
-            
-            <Link href="/book" className="block pt-2">
-              <Button
-                className="w-full bg-brass text-brand hover:bg-brass-light font-semibold"
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" />
+
+            <Link href="/book" className="block pt-1">
+              <Button className="w-full bg-brass text-night hover:bg-brass-light font-semibold gap-2">
+                <ArrowLeft className="h-4 w-4" />
                 New Booking
               </Button>
             </Link>

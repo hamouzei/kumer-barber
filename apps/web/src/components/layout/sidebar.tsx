@@ -41,28 +41,30 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        "hidden h-screen flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-all duration-200 md:flex",
-        collapsed ? "w-16" : "w-60"
+        "hidden h-screen flex-col bg-night text-ivory/80 transition-all duration-200 md:flex",
+        collapsed ? "w-[68px]" : "w-60"
       )}
     >
       {/* Logo */}
       <div
         className={cn(
-          "flex h-16 shrink-0 items-center border-b border-sidebar-border px-4",
-          collapsed ? "justify-center" : "gap-2"
+          "flex h-16 shrink-0 items-center border-b border-ivory/6 px-4",
+          collapsed ? "justify-center" : "gap-2.5"
         )}
       >
-        <Scissors className="h-5 w-5 shrink-0 text-brass" />
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brass/12">
+          <Scissors className="h-4 w-4 text-brass" />
+        </div>
         {!collapsed && (
-          <span className="font-heading text-base font-bold tracking-tight">
+          <span className="font-heading text-sm font-bold tracking-tight text-ivory">
             360 Yabu
           </span>
         )}
       </div>
 
       {/* Nav Links */}
-      <ScrollArea className="flex-1 py-4">
-        <nav className="flex flex-col gap-1 px-2">
+      <ScrollArea className="flex-1 py-3">
+        <nav className="flex flex-col gap-0.5 px-2">
           {sidebarLinks.map((link) => {
             const isActive =
               link.href === "/admin"
@@ -71,10 +73,10 @@ export function Sidebar() {
             const Icon = link.icon;
 
             const linkClasses = cn(
-              "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
+              "flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all duration-150",
               isActive
-                ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                : "text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
+                ? "bg-brass/12 text-brass"
+                : "text-ivory/45 hover:bg-ivory/5 hover:text-ivory/80",
               collapsed && "justify-center px-2"
             );
 
@@ -84,7 +86,7 @@ export function Sidebar() {
                   <TooltipTrigger
                     render={<Link href={link.href} className={linkClasses} />}
                   >
-                    <Icon className="h-4 w-4 shrink-0" />
+                    <Icon className={cn("h-[18px] w-[18px] shrink-0", isActive && "text-brass")} />
                   </TooltipTrigger>
                   <TooltipContent side="right">{link.label}</TooltipContent>
                 </Tooltip>
@@ -93,8 +95,11 @@ export function Sidebar() {
 
             return (
               <Link key={link.href} href={link.href} className={linkClasses}>
-                <Icon className="h-4 w-4 shrink-0" />
+                <Icon className={cn("h-[18px] w-[18px] shrink-0", isActive && "text-brass")} />
                 <span>{link.label}</span>
+                {isActive && (
+                  <div className="ml-auto h-1.5 w-1.5 rounded-full bg-brass" />
+                )}
               </Link>
             );
           })}
@@ -102,12 +107,12 @@ export function Sidebar() {
       </ScrollArea>
 
       {/* Collapse Toggle */}
-      <div className="border-t border-sidebar-border p-2">
+      <div className="border-t border-ivory/6 p-2">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => setCollapsed(!collapsed)}
-          className="w-full justify-center text-sidebar-foreground/40 hover:text-sidebar-foreground"
+          className="w-full justify-center text-ivory/25 hover:text-ivory/60 hover:bg-ivory/5"
         >
           {collapsed ? (
             <ChevronRight className="h-4 w-4" />

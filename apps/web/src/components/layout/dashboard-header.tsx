@@ -35,7 +35,7 @@ export function DashboardHeader() {
         >
           <Menu className="h-5 w-5" />
         </SheetTrigger>
-        <SheetContent side="left" className="w-60 p-0">
+        <SheetContent side="left" className="w-60 p-0 bg-night border-none">
           <Sidebar />
         </SheetContent>
       </Sheet>
@@ -43,7 +43,7 @@ export function DashboardHeader() {
       <div className="hidden md:block" />
 
       {/* Right side actions */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1">
         {/* Notifications */}
         <DropdownMenu>
           <DropdownMenuTrigger
@@ -58,7 +58,7 @@ export function DashboardHeader() {
           >
             <Bell className="h-4 w-4" />
             {unreadCount > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-brass px-1 text-[10px] font-bold text-brand">
+              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-brass px-1 text-[10px] font-bold text-night">
                 {unreadCount > 9 ? "9+" : unreadCount}
               </span>
             )}
@@ -80,7 +80,7 @@ export function DashboardHeader() {
             <DropdownMenuSeparator />
             <ScrollArea className="max-h-72">
               {notifications.length === 0 ? (
-                <div className="p-4 text-center text-sm text-muted-foreground">
+                <div className="p-6 text-center text-sm text-muted-foreground">
                   No notifications
                 </div>
               ) : (
@@ -90,7 +90,7 @@ export function DashboardHeader() {
                       key={notification.notificationId}
                       className={cn(
                         "flex flex-col items-start gap-1 p-3 cursor-pointer",
-                        !notification.isRead && "bg-accent/50"
+                        !notification.isRead && "bg-brass/5"
                       )}
                       onClick={() => {
                         if (!notification.isRead) {
@@ -131,6 +131,7 @@ export function DashboardHeader() {
           size="icon"
           onClick={logout}
           aria-label="Log out"
+          className="text-muted-foreground hover:text-foreground"
         >
           <LogOut className="h-4 w-4" />
         </Button>
