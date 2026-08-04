@@ -231,7 +231,7 @@ export default function SettingsPage() {
                 id="accountHolder"
                 value={settings.accountHolder ?? ""}
                 onChange={(e) => updateField("accountHolder", e.target.value)}
-                placeholder="e.g. Yabu Barber Shop"
+                placeholder="e.g. Kemkem Barbershop"
               />
             </div>
             <div className="space-y-2">
@@ -317,7 +317,7 @@ export default function SettingsPage() {
                 type="email"
                 value={settings.contactEmail ?? ""}
                 onChange={(e) => updateField("contactEmail", e.target.value)}
-                placeholder="contact@360yabu.com"
+                placeholder="contact@kemkem.com"
               />
             </div>
             <div className="space-y-2">

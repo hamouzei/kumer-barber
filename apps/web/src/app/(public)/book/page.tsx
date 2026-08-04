@@ -573,7 +573,7 @@ export default function BookingPage() {
                           accountNumber:
                             settings?.cbeAccount || "1000 4821 7365 90",
                           holder:
-                            settings?.accountHolder || "Yabu Barber Shop",
+                            settings?.accountHolder || "Kemkem Barbershop",
                           color:
                             "bg-purple-50 border-purple-200 dark:bg-purple-950/30 dark:border-purple-800/40",
                           accent: "text-purple-700 dark:text-purple-400",
@@ -585,7 +585,7 @@ export default function BookingPage() {
                           accountNumber:
                             settings?.telebirrAccount || "0912 345 678",
                           holder:
-                            settings?.accountHolder || "Yabu Barber Shop",
+                            settings?.accountHolder || "Kemkem Barbershop",
                           color:
                             "bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-800/40",
                           accent: "text-green-700 dark:text-green-400",

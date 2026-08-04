@@ -21,6 +21,21 @@ interface ContentSectionData {
   [key: string]: unknown;
 }
 
+/** Inline TikTok icon — avoids an external icon dependency */
+function TikTokIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.8.1V9.01a6.27 6.27 0 0 0-.8-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V9.48a8.27 8.27 0 0 0 4.85 1.56V7.6a4.83 4.83 0 0 1-1.09-.91z" />
+    </svg>
+  );
+}
+
 const SERVICE_HIGHLIGHTS = [
   {
     icon: Scissors,
@@ -67,87 +82,85 @@ export default function HomePage() {
   const description =
     heroContent?.body ||
     "Precision haircuts, hot towel shaves, and top-tier grooming tailored to your style. Walk out looking your absolute best.";
-  const shopAddress = settings?.address || "Addis Ababa, Ethiopia";
 
   return (
     <div className="page-transition">
-      {/* ═══════ HERO ═══════ */}
-      <section className="relative overflow-hidden bg-night">
-        {/* Subtle radial gradient */}
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(200,150,90,0.08),transparent)]" />
+      {/* ═══════ HERO — VIDEO BACKGROUND ═══════ */}
+      <section className="relative min-h-[70vh] sm:min-h-[85vh] flex items-center justify-center overflow-hidden bg-night">
+        {/* Video background */}
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          poster="/images/kemkem-hero.png"
+          preload="auto"
+          className="absolute inset-0 h-full w-full object-cover object-center"
+        >
+          <source src="/images/hero_section.mp4" type="video/mp4" />
+        </video>
 
-        <div className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
-          <div className="grid items-center gap-12 lg:grid-cols-12 lg:gap-16">
-            {/* Left — Text */}
-            <div className="flex flex-col items-start lg:col-span-6 space-y-7">
-              <div className="inline-flex items-center gap-2 rounded-full border border-brass/20 bg-brass/8 px-4 py-1.5">
-                <Scissors className="h-3.5 w-3.5 text-brass" />
-                <span className="text-[11px] font-semibold tracking-[0.15em] text-brass uppercase">
-                  360 Yabu Barber Studio
-                </span>
-              </div>
+        {/* Dark overlay for readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-night/60 via-night/50 to-night/80" />
 
-              <h1 className="font-heading text-4xl font-bold tracking-tight text-ivory sm:text-5xl lg:text-[3.5rem] lg:leading-[1.1] whitespace-pre-line anim-fade-up">
-                {headline}
-              </h1>
+        {/* Content */}
+        <div className="relative z-10 mx-auto max-w-3xl px-4 py-20 text-center sm:px-6 lg:px-8">
+          {/* Logo */}
+          <div className="mb-6 flex justify-center anim-fade-up">
+            <Image
+              src="/kemekem-barbershop-circle-logo.svg"
+              alt="Kemkem Barbershop Logo"
+              width={72}
+              height={72}
+              className="h-16 w-16 sm:h-[72px] sm:w-[72px] rounded-full object-contain drop-shadow-lg"
+              priority
+            />
+          </div>
 
-              <p className="max-w-lg text-base text-ivory/50 leading-relaxed font-sans whitespace-pre-line anim-fade-up anim-delay-1">
-                {description}
-              </p>
+          {/* Badge */}
+          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-brass/25 bg-brass/10 px-4 py-1.5 backdrop-blur-sm anim-fade-up">
+            <Scissors className="h-3.5 w-3.5 text-brass" />
+            <span className="text-[11px] font-semibold tracking-[0.15em] text-brass uppercase">
+              Kemkem Barbershop
+            </span>
+          </div>
 
-              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto pt-1 anim-fade-up anim-delay-2">
-                <Link href="/book" className="w-full sm:w-auto">
-                  <Button
-                    size="lg"
-                    className="w-full sm:w-auto bg-brass text-night hover:bg-brass-light font-semibold text-sm px-7 h-12 gap-2"
-                  >
-                    Book Appointment
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
-                <Link href="/gallery" className="w-full sm:w-auto">
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="w-full sm:w-auto border-ivory/15 text-ivory hover:bg-ivory/5 text-sm px-7 h-12"
-                  >
-                    View Our Work
-                  </Button>
-                </Link>
-              </div>
-            </div>
+          {/* Headline */}
+          <h1 className="font-heading text-4xl font-bold tracking-tight text-ivory sm:text-5xl lg:text-6xl lg:leading-[1.1] whitespace-pre-line anim-fade-up anim-delay-1">
+            {headline}
+          </h1>
 
-            {/* Right — Hero Image */}
-            <div className="lg:col-span-6 flex justify-center lg:justify-end anim-fade-up anim-delay-2">
-              <div className="relative w-full max-w-md aspect-[4/5] rounded-2xl overflow-hidden">
-                {/* Brass frame accent */}
-                <div className="absolute -inset-px rounded-2xl border border-brass/15 z-10 pointer-events-none" />
-                <div className="absolute inset-0 rounded-2xl overflow-hidden">
-                  <Image
-                    src="/images/barber-hero.png"
-                    alt="360 Yabu Barber Studio"
-                    fill
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                    priority
-                    className="object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-night/70 via-night/10 to-transparent" />
-                </div>
+          {/* Description */}
+          <p className="mx-auto mt-5 max-w-xl text-base text-ivory/55 leading-relaxed font-sans whitespace-pre-line anim-fade-up anim-delay-2">
+            {description}
+          </p>
 
-                {/* Overlay badge */}
-                <div className="absolute bottom-5 left-5 right-5 z-10 flex items-center gap-3 rounded-xl border border-ivory/10 bg-night/80 px-4 py-3 backdrop-blur-md">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brass/15">
-                    <Scissors className="h-4 w-4 text-brass" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-ivory">
-                      360 Yabu Barber
-                    </p>
-                    <p className="text-[11px] text-ivory/45">{shopAddress}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+          {/* CTA Buttons */}
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 anim-fade-up anim-delay-3">
+            <Link href="/book" className="w-full sm:w-auto">
+              <Button
+                size="lg"
+                className="w-full sm:w-auto bg-brass text-night hover:bg-brass-light font-semibold text-sm px-7 h-12 gap-2 transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98]"
+              >
+                Book Appointment
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+            <a
+              href="https://www.tiktok.com/@kemekembarbershop?_r=1&_t=ZS-98c097GY8hj"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full sm:w-auto"
+            >
+              <Button
+                size="lg"
+                variant="outline"
+                className="w-full sm:w-auto border-ivory/20 text-ivory hover:bg-ivory/10 hover:border-ivory/30 text-sm px-7 h-12 gap-2 backdrop-blur-sm transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <TikTokIcon className="h-4 w-4" />
+                View Our Work
+              </Button>
+            </a>
           </div>
         </div>
       </section>

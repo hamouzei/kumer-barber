@@ -23,8 +23,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "360 Yabu — Professional Barber",
-    template: "%s | 360 Yabu",
+    default: "Kemkem — Professional Barbershop",
+    template: "%s | Kemkem",
   },
   description:
     "Premium grooming experience. Book your appointment online and look sharp every time.",
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    siteName: "360 Yabu",
+    siteName: "Kemkem",
   },
 };
 

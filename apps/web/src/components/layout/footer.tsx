@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Scissors, Camera, MessageCircle, Phone, Mail, MapPin } from "lucide-react";
+import Image from "next/image";
+import { Camera, MessageCircle, Phone, Mail, MapPin } from "lucide-react";
 import { api } from "@/lib/api-client";
 import type { BusinessSettings } from "@/types";
 
@@ -51,10 +52,14 @@ export function Footer({
               href="/"
               className="flex items-center gap-2.5 font-heading text-lg font-bold text-ivory"
             >
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brass/15">
-                <Scissors className="h-4 w-4 text-brass" />
-              </div>
-              360 Yabu
+              <Image
+                src="/kemekem-barbershop-circle-logo.svg"
+                alt="Kemkem Barbershop Logo"
+                width={32}
+                height={32}
+                className="h-8 w-8 rounded-full object-contain"
+              />
+              Kemkem
             </Link>
             <p className="text-sm leading-relaxed text-ivory/40 max-w-xs">
               Premium grooming experience in Addis Ababa. Precision cuts,
@@ -152,7 +157,7 @@ export function Footer({
 
         <div className="mt-12 border-t border-ivory/5 pt-6 flex flex-col items-center justify-between gap-4 sm:flex-row">
           <p className="text-xs text-ivory/25">
-            © {currentYear} 360 Yabu. All rights reserved.
+            © {currentYear} Kemkem. All rights reserved.
           </p>
           <p className="text-xs text-ivory/25">
             Addis Ababa, Ethiopia

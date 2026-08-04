@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Scissors, Moon, Sun, Menu, X } from "lucide-react";
+import { Moon, Sun, Menu, X } from "lucide-react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/hooks/use-theme";
 import { cn } from "@/lib/utils";
@@ -51,10 +52,15 @@ export function Navbar() {
           href="/"
           className="flex items-center gap-2.5 font-heading text-xl font-bold tracking-tight"
         >
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brass/10">
-            <Scissors className="h-4 w-4 text-brass" />
-          </div>
-          <span>360 Yabu</span>
+          <Image
+            src="/kemekem-barbershop-circle-logo.svg"
+            alt="Kemkem Barbershop Logo"
+            width={32}
+            height={32}
+            className="h-8 w-8 rounded-full object-contain"
+            priority
+          />
+          <span>Kemkem</span>
         </Link>
 
         {/* Desktop Nav */}

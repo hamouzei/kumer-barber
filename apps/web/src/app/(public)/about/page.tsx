@@ -58,7 +58,7 @@ export default function AboutPage() {
   const title = aboutContent?.title || "About Us";
   const bodyText =
     aboutContent?.body ||
-    `At 360 Yabu, we believe that a great haircut is more than just a trim — it's an experience. Founded with a passion for precision and a commitment to quality, we deliver premium grooming services that leave our clients feeling confident and refreshed.
+    `At Kemkem, we believe that a great haircut is more than just a trim — it's an experience. Founded with a passion for precision and a commitment to quality, we deliver premium grooming services that leave our clients feeling confident and refreshed.
 
 Our approach combines time-honored barbering techniques with modern styling trends. Whether you're looking for a classic cut, a sharp fade, or a complete style transformation, we bring dedication and attention to detail to every client.`;
   const imageUrl = (aboutContent?.imageUrl as string) || "";
