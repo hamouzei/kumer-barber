@@ -82,9 +82,27 @@ export function createApp() {
   app.use("/api/v1/admin/settings", settingsRoutes);
   app.use("/api/v1/admin/notifications", notificationAdminRoutes);
 
-  // ─── Health Check ───
+  // ─── Root & Health Check ───
+  app.get("/", (_req, res) => {
+    res.status(200).json({
+      status: "ok",
+      name: "Kemkem Barbershop API",
+      health: "/api/v1/health",
+      timestamp: new Date().toISOString(),
+    });
+  });
+
+  app.get("/favicon.ico", (_req, res) => {
+    res.status(204).end();
+  });
+
   app.get("/api/v1/health", (_req, res) => {
     res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
+  // ─── 404 Catch-All ───
+  app.use((_req, res) => {
+    res.status(404).json({ error: "NotFound", message: "Route not found" });
   });
 
   // ─── Error Handler (must be last) ───

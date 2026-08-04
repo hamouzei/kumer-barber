@@ -10,9 +10,17 @@ const envSchema = z.object({
   // Database (Aiven MySQL)
   DATABASE_URL: z.string().min(1).describe("MySQL connection string from Aiven"),
 
-  // JWT (RS256)
-  JWT_PRIVATE_KEY: z.string().min(1).describe("RSA private key (PEM format) for signing JWTs"),
-  JWT_PUBLIC_KEY: z.string().min(1).describe("RSA public key (PEM format) for verifying JWTs"),
+  // JWT (RS256) - automatically unescape \n in multiline PEM string
+  JWT_PRIVATE_KEY: z
+    .string()
+    .min(1)
+    .transform((val) => val.replace(/\\n/g, "\n"))
+    .describe("RSA private key (PEM format) for signing JWTs"),
+  JWT_PUBLIC_KEY: z
+    .string()
+    .min(1)
+    .transform((val) => val.replace(/\\n/g, "\n"))
+    .describe("RSA public key (PEM format) for verifying JWTs"),
   JWT_ACCESS_EXPIRY: z.string().default("15m"),
   JWT_REFRESH_EXPIRY: z.string().default("7d"),
 
@@ -36,8 +44,10 @@ function loadEnv(): Env {
 
   if (!result.success) {
     const formatted = z.prettifyError(result.error);
-    console.error("❌ Invalid environment variables:\n", formatted);
-    process.exit(1);
+    console.error("❌ Invalid or missing environment variables on server start:\n", formatted);
+    throw new Error(
+      `Invalid or missing environment variables:\n${formatted}`
+    );
   }
 
   return result.data;
