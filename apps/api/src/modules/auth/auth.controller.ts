@@ -7,20 +7,24 @@ import { UnauthorizedError } from "../../shared/errors/app-error.js";
 const REFRESH_COOKIE = "refresh_token";
 
 function setRefreshCookie(res: Response, token: string): void {
+  const isProduction = env.NODE_ENV === "production";
+
   res.cookie(REFRESH_COOKIE, token, {
     httpOnly: true,
-    secure: env.NODE_ENV === "production",
-    sameSite: "strict",
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
     path: "/api/v1/admin",
   });
 }
 
 function clearRefreshCookie(res: Response): void {
+  const isProduction = env.NODE_ENV === "production";
+
   res.clearCookie(REFRESH_COOKIE, {
     httpOnly: true,
-    secure: env.NODE_ENV === "production",
-    sameSite: "strict",
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
     path: "/api/v1/admin",
   });
 }

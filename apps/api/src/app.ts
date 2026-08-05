@@ -37,6 +37,7 @@ import { dashboardRoutes } from "./modules/dashboard/dashboard.routes.js";
 
 export function createApp() {
   const app = express();
+  app.set("trust proxy", 1);
 
   // ─── Global Middleware ───
   app.use(helmet());
