@@ -1,7 +1,7 @@
 import { and, gte, lte, inArray, sql } from "drizzle-orm";
 import { db } from "../../db/client.js";
-import { appointments, businessSettings } from "../../db/schema/index.js";
-import { NotFoundError } from "../../shared/errors/app-error.js";
+import { appointments } from "../../db/schema/index.js";
+import { getSettings } from "../settings/settings.service.js";
 
 interface TimeSlot {
   time: string;
@@ -55,21 +55,17 @@ function buildDateRange(workingDays: number[], daysAhead: number): string[] {
  * Groups booked slots by date and filters against the total slot count.
  */
 export async function getAvailableDates(): Promise<string[]> {
-  const [settings] = await db.select().from(businessSettings).limit(1);
+  const settings = await getSettings();
 
-  if (!settings) {
-    throw new NotFoundError("Business settings");
-  }
-
-  const workingDays = settings.workingDays as number[];
+  const workingDays = (settings.workingDays as number[]) ?? [1, 2, 3, 4, 5, 6];
   const candidateDates = buildDateRange(workingDays, 90);
 
   if (candidateDates.length === 0) return [];
 
   const allSlots = generateTimeSlots(
-    settings.openingTime,
-    settings.closingTime,
-    settings.durationMinutes
+    settings.openingTime || "09:00:00",
+    settings.closingTime || "18:00:00",
+    settings.durationMinutes || 60
   );
   const totalSlotCount = allSlots.length;
 
@@ -78,7 +74,7 @@ export async function getAvailableDates(): Promise<string[]> {
   const firstDate = candidateDates[0]!;
   const lastDate = candidateDates[candidateDates.length - 1]!;
 
-  // Single query: count booked slots per date across the entire 30-day range
+  // Single query: count booked slots per date across the entire date range
   const bookedCounts = await db
     .select({
       date: appointments.appointmentDate,
@@ -110,13 +106,9 @@ export async function getAvailableDates(): Promise<string[]> {
 export async function getAvailableSlots(
   date: string
 ): Promise<{ date: string; slots: TimeSlot[] }> {
-  const [settings] = await db.select().from(businessSettings).limit(1);
+  const settings = await getSettings();
 
-  if (!settings) {
-    throw new NotFoundError("Business settings");
-  }
-
-  const workingDays = settings.workingDays as number[];
+  const workingDays = (settings.workingDays as number[]) ?? [1, 2, 3, 4, 5, 6];
   const targetDate = new Date(date + "T00:00:00");
   const dayOfWeek = targetDate.getDay();
 
@@ -125,9 +117,9 @@ export async function getAvailableSlots(
   }
 
   const allSlots = generateTimeSlots(
-    settings.openingTime,
-    settings.closingTime,
-    settings.durationMinutes
+    settings.openingTime || "09:00:00",
+    settings.closingTime || "18:00:00",
+    settings.durationMinutes || 60
   );
 
   // Single query for this specific date
@@ -153,11 +145,5 @@ export async function getAvailableSlots(
 }
 
 export async function getBusinessSettings() {
-  const [settings] = await db.select().from(businessSettings).limit(1);
-
-  if (!settings) {
-    throw new NotFoundError("Business settings");
-  }
-
-  return settings;
+  return getSettings();
 }
