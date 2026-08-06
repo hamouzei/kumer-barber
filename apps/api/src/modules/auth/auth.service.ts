@@ -5,7 +5,7 @@ import { db } from "../../db/client.js";
 import { adminUsers } from "../../db/schema/index.js";
 import { env } from "../../config/env.js";
 import { UnauthorizedError } from "../../shared/errors/app-error.js";
-import type { LoginDto } from "./auth.dto.js";
+import type { LoginDto, ChangePasswordDto } from "./auth.dto.js";
 
 export interface TokenPayload {
   adminId: number;
@@ -114,3 +114,40 @@ export async function refreshTokens(
     refreshToken: signRefreshToken(payload),
   };
 }
+
+export async function changePassword(
+  adminId: number,
+  dto: ChangePasswordDto
+): Promise<void> {
+  const [admin] = await db
+    .select()
+    .from(adminUsers)
+    .where(eq(adminUsers.adminId, adminId))
+    .limit(1);
+
+  if (!admin) {
+    throw new UnauthorizedError("Admin account not found");
+  }
+
+  const isCurrentValid = await argon2.verify(
+    admin.passwordHash,
+    dto.currentPassword
+  );
+
+  if (!isCurrentValid) {
+    throw new UnauthorizedError("Current password is incorrect");
+  }
+
+  const newHash = await argon2.hash(dto.newPassword, {
+    type: argon2.argon2id,
+    memoryCost: 65536,
+    timeCost: 3,
+    parallelism: 4,
+  });
+
+  await db
+    .update(adminUsers)
+    .set({ passwordHash: newHash })
+    .where(eq(adminUsers.adminId, adminId));
+}
+

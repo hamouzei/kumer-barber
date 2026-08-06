@@ -29,6 +29,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Eye,
+  Trash2,
 } from "lucide-react";
 
 function AppointmentsContent() {
@@ -37,6 +38,8 @@ function AppointmentsContent() {
 
   const [data, setData] = useState<PaginatedResponse<Appointment> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isClearing, setIsClearing] = useState(false);
+  const [clearMessage, setClearMessage] = useState("");
 
   const [status, setStatus] = useState(searchParams.get("status") ?? "");
   const [search, setSearch] = useState("");
@@ -76,16 +79,62 @@ function AppointmentsContent() {
     return () => clearTimeout(timer);
   }, [searchInput]);
 
+  async function handleClearPast() {
+    const confirmed = window.confirm(
+      "This will permanently delete all appointments from past days (before today).\n\nThis action cannot be undone. Continue?"
+    );
+    if (!confirmed) return;
+
+    setIsClearing(true);
+    setClearMessage("");
+    try {
+      const result = await api.delete<{ message: string; deletedCount: number }>(
+        "/admin/appointments/clear-past"
+      );
+      setClearMessage(
+        result.deletedCount > 0
+          ? `Cleared ${result.deletedCount} past appointment(s)`
+          : "No past appointments to clear"
+      );
+      setPage(1);
+      await fetchAppointments();
+    } catch {
+      setClearMessage("Failed to clear appointments");
+    } finally {
+      setIsClearing(false);
+      setTimeout(() => setClearMessage(""), 4000);
+    }
+  }
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-heading text-2xl font-bold tracking-tight">
-          Appointments
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Manage all booking requests and appointments
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-heading text-2xl font-bold tracking-tight">
+            Appointments
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Manage all booking requests and appointments
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          onClick={handleClearPast}
+          disabled={isClearing}
+          className="gap-1.5 border-red-500/30 text-red-500 hover:bg-red-500/10 hover:text-red-400"
+        >
+          {isClearing ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Trash2 className="h-4 w-4" />
+          )}
+          Clear Past
+        </Button>
       </div>
+
+      {clearMessage && (
+        <p className="text-sm font-medium text-muted-foreground">{clearMessage}</p>
+      )}
 
       {/* Filters */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -239,3 +288,4 @@ export default function AppointmentsPage() {
     </Suspense>
   );
 }
+

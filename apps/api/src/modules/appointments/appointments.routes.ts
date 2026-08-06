@@ -29,6 +29,11 @@ adminRouter.get(
   appointmentsController.getAllAppointments
 );
 
+adminRouter.delete(
+  "/clear-past",
+  appointmentsController.clearPastAppointments
+);
+
 adminRouter.get("/:id", appointmentsController.getAppointmentDetail);
 
 adminRouter.patch(

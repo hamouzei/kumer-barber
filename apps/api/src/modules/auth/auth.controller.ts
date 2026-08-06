@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import * as authService from "./auth.service.js";
-import type { LoginDto } from "./auth.dto.js";
+import type { LoginDto, ChangePasswordDto } from "./auth.dto.js";
 import { env } from "../../config/env.js";
 import { UnauthorizedError } from "../../shared/errors/app-error.js";
 
@@ -65,3 +65,18 @@ export async function logout(
   clearRefreshCookie(res);
   res.status(200).json({ message: "Logged out successfully" });
 }
+
+export async function changePassword(
+  req: Request,
+  res: Response
+): Promise<void> {
+  if (!req.admin) {
+    throw new UnauthorizedError("Authentication required");
+  }
+
+  const dto = req.body as ChangePasswordDto;
+  await authService.changePassword(req.admin.adminId, dto);
+
+  res.status(200).json({ message: "Password changed successfully" });
+}
+

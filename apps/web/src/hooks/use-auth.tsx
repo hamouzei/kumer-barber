@@ -26,7 +26,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    // Attempt to restore session from refresh token cookie
+    // Check sessionStorage first — if a token already exists (e.g. user
+    // just logged in and navigated here), trust it immediately instead
+    // of forcing a round-trip refreshSession that can race with the
+    // AdminGuard redirect.
+    if (authLib.isAuthenticated()) {
+      setIsAuthenticated(true);
+      setIsLoading(false);
+      return;
+    }
+
+    // No token in storage — try restoring the session from the refresh
+    // token cookie (covers page-reload / new-tab scenarios).
     authLib
       .refreshSession()
       .then((success) => {

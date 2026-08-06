@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { api } from "@/lib/api-client";
+import { api, ApiError } from "@/lib/api-client";
 import type { BusinessSettings } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, Save, Settings, Clock, DollarSign, Globe } from "lucide-react";
+import { Loader2, Save, Settings, Clock, DollarSign, Globe, Lock } from "lucide-react";
 
 const DAYS_OF_WEEK = [
   { value: 0, label: "Sun" },
@@ -26,6 +26,16 @@ export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  // Password change state
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordMessage, setPasswordMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   useEffect(() => {
     api
@@ -78,6 +88,66 @@ export default function SettingsPage() {
       // Error handled by API client
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function handleChangePassword() {
+    setPasswordMessage(null);
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setPasswordMessage({ type: "error", text: "All fields are required" });
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setPasswordMessage({
+        type: "error",
+        text: "New password must be at least 8 characters",
+      });
+      return;
+    }
+
+    if (newPassword === currentPassword) {
+      setPasswordMessage({
+        type: "error",
+        text: "New password must be different from the current password",
+      });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordMessage({ type: "error", text: "Passwords do not match" });
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      await api.put<{ message: string }>("/admin/change-password", {
+        currentPassword,
+        newPassword,
+        confirmPassword,
+      });
+      setPasswordMessage({
+        type: "success",
+        text: "Password changed successfully",
+      });
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error: unknown) {
+      if (error instanceof ApiError) {
+        setPasswordMessage({
+          type: "error",
+          text: error.message,
+        });
+      } else {
+        setPasswordMessage({
+          type: "error",
+          text: "Failed to change password. Please try again.",
+        });
+      }
+    } finally {
+      setIsChangingPassword(false);
     }
   }
 
@@ -374,7 +444,85 @@ export default function SettingsPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Account Security — Change Password */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Lock className="h-4 w-4 text-brass" />
+              Account Security
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="currentPassword">Current Password</Label>
+              <Input
+                id="currentPassword"
+                type="password"
+                value={currentPassword}
+                onChange={(e) => {
+                  setCurrentPassword(e.target.value);
+                  setPasswordMessage(null);
+                }}
+                placeholder="Enter your current password"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="newPassword">New Password</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={newPassword}
+                onChange={(e) => {
+                  setNewPassword(e.target.value);
+                  setPasswordMessage(null);
+                }}
+                placeholder="Enter your new password (min 8 characters)"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm New Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  setPasswordMessage(null);
+                }}
+                placeholder="Confirm your new password"
+              />
+            </div>
+
+            {passwordMessage && (
+              <p
+                className={`text-sm font-medium ${
+                  passwordMessage.type === "success"
+                    ? "text-emerald-500"
+                    : "text-red-500"
+                }`}
+              >
+                {passwordMessage.text}
+              </p>
+            )}
+
+            <Button
+              onClick={handleChangePassword}
+              disabled={isChangingPassword || !currentPassword || !newPassword || !confirmPassword}
+              variant="outline"
+              className="w-full gap-1.5 border-brass/30 hover:bg-brass/10"
+            >
+              {isChangingPassword ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Lock className="h-4 w-4" />
+              )}
+              Change Password
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
 }
+

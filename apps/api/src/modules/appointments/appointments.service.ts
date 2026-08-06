@@ -27,7 +27,7 @@ function addMinutesToTime(time: string, minutes: number): string {
   return `${String(newH).padStart(2, "0")}:${String(newM).padStart(2, "0")}:00`;
 }
 
-/** Generates a human-readable booking reference like YBU-7X3K9M */
+/** Generates a human-readable booking reference like KMKM-7X3K9M */
 function generateBookingRef(): string {
   const CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O/I/1
   const bytes = randomBytes(6);
@@ -35,7 +35,7 @@ function generateBookingRef(): string {
   for (let i = 0; i < 6; i++) {
     code += CHARS[bytes[i]! % CHARS.length];
   }
-  return `YBU-${code}`;
+  return `KMKM-${code}`;
 }
 
 export async function createBooking(
@@ -402,4 +402,21 @@ export async function cancelAppointment(
   id: number
 ): Promise<{ status: string }> {
   return transitionStatus(id, "cancelled");
+}
+
+/**
+ * Deletes all appointments whose appointment_date is before today.
+ * Notifications linked to these appointments are cascade-deleted
+ * by the FK constraint.
+ */
+export async function clearPastAppointments(): Promise<{ deletedCount: number }> {
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+
+  const result = await db
+    .delete(appointments)
+    .where(sql`${appointments.appointmentDate} < ${today}`);
+
+  const deletedCount = (result[0] as unknown as { affectedRows: number }).affectedRows;
+
+  return { deletedCount };
 }

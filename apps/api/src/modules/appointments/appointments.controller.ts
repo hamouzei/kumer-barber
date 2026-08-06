@@ -80,3 +80,14 @@ export async function cancelAppointment(
   const result = await appointmentsService.cancelAppointment(id);
   res.status(200).json(result);
 }
+
+export async function clearPastAppointments(
+  _req: Request,
+  res: Response
+): Promise<void> {
+  const result = await appointmentsService.clearPastAppointments();
+  res.status(200).json({
+    message: `Cleared ${result.deletedCount} past appointment(s)`,
+    deletedCount: result.deletedCount,
+  });
+}

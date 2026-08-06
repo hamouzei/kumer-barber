@@ -24,7 +24,10 @@ async function seed(): Promise<void> {
         passwordHash,
       })
       .onDuplicateKeyUpdate({
-        set: { email: sql`email` },
+        set: {
+          email: env.SEED_ADMIN_EMAIL,
+          passwordHash,
+        },
       });
 
     logger.info(`Admin user seeded: ${env.SEED_ADMIN_EMAIL}`);
