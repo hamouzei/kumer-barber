@@ -87,7 +87,7 @@ export function createApp() {
   app.get("/", (_req, res) => {
     res.status(200).json({
       status: "ok",
-      name: "Kemkem Barbershop API",
+      name: "Kumer Barbershop API",
       health: "/api/v1/health",
       timestamp: new Date().toISOString(),
     });

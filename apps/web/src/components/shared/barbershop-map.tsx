@@ -24,15 +24,51 @@ export function BarbershopMap({
   const isAddressUrl = address?.startsWith("http://") || address?.startsWith("https://");
   const directMapsUrl = googleMapsUrl || (isAddressUrl ? address : null);
 
-  const displayAddress = isAddressUrl
-    ? "Bole Medhanealem, Next to Edna Mall, Addis Ababa, Ethiopia"
-    : address && address.trim().length > 0
-    ? address
-    : "Bole Medhanealem, Next to Edna Mall, Addis Ababa, Ethiopia";
+  const displayAddress =
+    isAddressUrl
+      ? "Bole Medhanealem, Next to Edna Mall, Addis Ababa, Ethiopia"
+      : address && address.trim().length > 0
+      ? address
+      : "Bole Medhanealem, Next to Edna Mall, Addis Ababa, Ethiopia";
 
-  const mapEmbedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(
-    displayAddress
-  )}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+  /**
+   * Build the iframe embed src.
+   * - If a googleMapsUrl is saved in settings, extract the query / place from it
+   *   and build a proper embed URL so the iframe shows that exact pin.
+   * - Otherwise fall back to an address-based embed.
+   */
+  function buildEmbedUrl(): string {
+    if (googleMapsUrl && googleMapsUrl.trim().length > 0) {
+      try {
+        const parsed = new URL(googleMapsUrl.trim());
+
+        // Full Google Maps URL: https://www.google.com/maps/place/.../@lat,lng,...
+        // or https://www.google.com/maps?q=...
+        const qParam = parsed.searchParams.get("q");
+        if (qParam) {
+          return `https://maps.google.com/maps?q=${encodeURIComponent(qParam)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+        }
+
+        // Extract coordinates from /maps/place/Name/@lat,lng,zoom
+        const coordsMatch = parsed.pathname.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+        if (coordsMatch) {
+          const lat = coordsMatch[1];
+          const lng = coordsMatch[2];
+          return `https://maps.google.com/maps?q=${lat},${lng}&t=&z=16&ie=UTF8&iwloc=&output=embed`;
+        }
+
+        // Short links (maps.app.goo.gl) can't be embedded directly —
+        // embed by the display address and let the "Get Directions" button
+        // use the short link as-is (it will redirect correctly in a new tab).
+      } catch {
+        // Invalid URL — fall through to address-based embed
+      }
+    }
+
+    return `https://maps.google.com/maps?q=${encodeURIComponent(displayAddress)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+  }
+
+  const mapEmbedUrl = buildEmbedUrl();
 
   function handleGetDirections() {
     if (directMapsUrl) {

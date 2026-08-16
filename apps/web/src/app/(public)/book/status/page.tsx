@@ -183,7 +183,7 @@ function BookingStatusContent() {
                   </Label>
                   <Input
                     id="lookupRef"
-                    placeholder="e.g. KMKM-8LV427"
+                    placeholder="e.g. KMR-8LV427"
                     value={lookupRef}
                     onChange={(e) => setLookupRef(e.target.value)}
                     className="uppercase font-mono h-11 text-center text-lg tracking-wider"

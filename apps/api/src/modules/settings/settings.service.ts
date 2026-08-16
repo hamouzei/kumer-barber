@@ -13,11 +13,11 @@ const DEFAULT_SETTINGS = {
   workingDays: [1, 2, 3, 4, 5, 6],
   paymentInstructions:
     "Please transfer the deposit amount to complete your booking.",
-  accountHolder: "Kemkem Barbershop",
+  accountHolder: "Kumer Barbershop",
   cbeAccount: "1000 4821 7365 90",
   telebirrAccount: "0912 345 678",
   contactPhone: "+251938391771",
-  contactEmail: "contact@kemkem.com",
+  contactEmail: "contact@kumer.com",
   address: "Bole Medhanealem, Next to Edna Mall, Addis Ababa, Ethiopia",
   googleMapsUrl: "",
   bookingPolicy: "",

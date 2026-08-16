@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1786835022254,
+      "tag": "0000_futuristic_punisher",
+      "breakpoints": true
+    }
+  ]
+}

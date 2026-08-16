@@ -27,7 +27,7 @@ function addMinutesToTime(time: string, minutes: number): string {
   return `${String(newH).padStart(2, "0")}:${String(newM).padStart(2, "0")}:00`;
 }
 
-/** Generates a human-readable booking reference like KMKM-7X3K9M */
+/** Generates a human-readable booking reference like KMR-7X3K9M */
 function generateBookingRef(): string {
   const CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O/I/1
   const bytes = randomBytes(6);
@@ -35,7 +35,7 @@ function generateBookingRef(): string {
   for (let i = 0; i < 6; i++) {
     code += CHARS[bytes[i]! % CHARS.length];
   }
-  return `KMKM-${code}`;
+  return `KMR-${code}`;
 }
 
 export async function createBooking(

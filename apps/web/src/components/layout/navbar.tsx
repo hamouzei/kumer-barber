@@ -52,15 +52,17 @@ export function Navbar() {
           href="/"
           className="flex items-center gap-2.5 font-heading text-xl font-bold tracking-tight"
         >
-          <Image
-            src="/kemekem-barbershop-circle-logo.svg"
-            alt="Kemkem Barbershop Logo"
-            width={32}
-            height={32}
-            className="h-8 w-8 rounded-full object-contain"
-            priority
-          />
-          <span>Kemkem</span>
+          <div className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-night shrink-0">
+            <Image
+              src="/kumer_the_barber_logo.svg"
+              alt="Kumer Barbershop Logo"
+              width={24}
+              height={24}
+              className="h-5 w-5 object-contain"
+              priority
+            />
+          </div>
+          <span>Kumer</span>
         </Link>
 
         {/* Desktop Nav */}

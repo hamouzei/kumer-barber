@@ -52,14 +52,16 @@ export function Footer({
               href="/"
               className="flex items-center gap-2.5 font-heading text-lg font-bold text-ivory"
             >
-              <Image
-                src="/kemekem-barbershop-circle-logo.svg"
-                alt="Kemkem Barbershop Logo"
-                width={32}
-                height={32}
-                className="h-8 w-8 rounded-full object-contain"
-              />
-              Kemkem
+              <div className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-night shrink-0">
+                <Image
+                  src="/kumer_the_barber_logo.svg"
+                  alt="Kumer Barbershop Logo"
+                  width={24}
+                  height={24}
+                  className="h-5 w-5 object-contain"
+                />
+              </div>
+              Kumer
             </Link>
             <p className="text-sm leading-relaxed text-ivory/40 max-w-xs">
               Premium grooming experience in Addis Ababa. Precision cuts,
@@ -157,11 +159,23 @@ export function Footer({
 
         <div className="mt-12 border-t border-ivory/5 pt-6 flex flex-col items-center justify-between gap-4 sm:flex-row">
           <p className="text-xs text-ivory/25">
-            © {currentYear} Kemkem. All rights reserved.
+            © {currentYear} Kumer. All rights reserved.
           </p>
           <p className="text-xs text-ivory/25">
             Addis Ababa, Ethiopia
           </p>
+          <Link
+            href="/admin"
+            className="opacity-15 hover:opacity-40 transition-opacity duration-300 text-ivory/30 hover:text-ivory/60 select-none"
+            tabIndex={-1}
+            aria-hidden="true"
+            title=""
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </Link>
         </div>
       </div>
     </footer>

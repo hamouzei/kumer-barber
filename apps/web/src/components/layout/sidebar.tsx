@@ -52,16 +52,18 @@ export function Sidebar() {
           collapsed ? "justify-center" : "gap-2.5"
         )}
       >
-        <Image
-          src="/kemekem-barbershop-circle-logo.svg"
-          alt="Kemkem Barbershop Logo"
-          width={32}
-          height={32}
-          className="h-8 w-8 shrink-0 rounded-full object-contain"
-        />
+        <div className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-night shrink-0">
+          <Image
+            src="/kumer_the_barber_logo.svg"
+            alt="Kumer Barbershop Logo"
+            width={24}
+            height={24}
+            className="h-5 w-5 object-contain shrink-0"
+          />
+        </div>
         {!collapsed && (
           <span className="font-heading text-sm font-bold tracking-tight text-ivory">
-            Kemkem
+            Kumer
           </span>
         )}
       </div>

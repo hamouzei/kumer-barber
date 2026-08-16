@@ -93,7 +93,7 @@ export default function HomePage() {
           muted
           loop
           playsInline
-          poster="/images/kemkem-hero.png"
+          poster="/images/kumer-hero.jpg"
           preload="auto"
           className="absolute inset-0 h-full w-full object-cover object-center"
         >
@@ -107,21 +107,23 @@ export default function HomePage() {
         <div className="relative z-10 mx-auto max-w-3xl px-4 py-20 text-center sm:px-6 lg:px-8">
           {/* Logo */}
           <div className="mb-6 flex justify-center anim-fade-up">
-            <Image
-              src="/kemekem-barbershop-circle-logo.svg"
-              alt="Kemkem Barbershop Logo"
-              width={72}
-              height={72}
-              className="h-16 w-16 sm:h-[72px] sm:w-[72px] rounded-full object-contain drop-shadow-lg"
-              priority
-            />
+            <div className="inline-flex items-center justify-center h-16 w-16 sm:h-[72px] sm:w-[72px] rounded-full bg-night drop-shadow-lg shrink-0">
+              <Image
+                src="/kumer_the_barber_logo.svg"
+                alt="Kumer Barbershop Logo"
+                width={72}
+                height={72}
+                className="h-12 w-12 sm:h-14 sm:w-14 object-contain"
+                priority
+              />
+            </div>
           </div>
 
           {/* Badge */}
           <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-brass/25 bg-brass/10 px-4 py-1.5 backdrop-blur-sm anim-fade-up">
             <Scissors className="h-3.5 w-3.5 text-brass" />
             <span className="text-[11px] font-semibold tracking-[0.15em] text-brass uppercase">
-              Kemkem Barbershop
+              Kumer Barbershop
             </span>
           </div>
 
@@ -147,7 +149,7 @@ export default function HomePage() {
               </Button>
             </Link>
             <a
-              href="https://www.tiktok.com/@kemekembarbershop?_r=1&_t=ZS-98c097GY8hj"
+              href="https://www.tiktok.com/@kumer_the_barber?_r=1&_t=ZS-98ux2hHpzOh"
               target="_blank"
               rel="noopener noreferrer"
               className="w-full sm:w-auto"
@@ -155,7 +157,7 @@ export default function HomePage() {
               <Button
                 size="lg"
                 variant="outline"
-                className="w-full sm:w-auto border-ivory/20 text-ivory hover:bg-ivory/10 hover:border-ivory/30 text-sm px-7 h-12 gap-2 backdrop-blur-sm transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                className="w-full sm:w-auto border-ivory/20 text-ivory hover:bg-ivory/10 hover:border-ivory/30 dark:border-ivory/20 dark:text-ivory dark:hover:bg-ivory/10 dark:hover:border-ivory/30 border-foreground/30 text-foreground hover:bg-foreground/5 text-sm px-7 h-12 gap-2 backdrop-blur-sm transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
               >
                 <TikTokIcon className="h-4 w-4" />
                 View Our Work
