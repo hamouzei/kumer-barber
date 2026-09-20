@@ -145,6 +145,8 @@ export async function getBookingStatus(
   status: string;
   appointment_date: string;
   time: string;
+  customer_name?: string;
+  payment_amount?: string;
 }> {
   const [appointment] = await db
     .select({
@@ -153,8 +155,11 @@ export async function getBookingStatus(
       status: appointments.status,
       appointmentDate: appointments.appointmentDate,
       startTime: appointments.startTime,
+      paymentAmount: appointments.paymentAmount,
+      customerName: customers.fullName,
     })
     .from(appointments)
+    .innerJoin(customers, eq(appointments.customerId, customers.customerId))
     .where(eq(appointments.bookingRef, bookingRef))
     .limit(1);
 
@@ -168,6 +173,8 @@ export async function getBookingStatus(
     status: appointment.status,
     appointment_date: appointment.appointmentDate,
     time: appointment.startTime.slice(0, 5),
+    customer_name: appointment.customerName,
+    payment_amount: appointment.paymentAmount,
   };
 }
 

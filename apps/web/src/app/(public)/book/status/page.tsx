@@ -4,8 +4,8 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/lib/api-client";
-import type { BookingStatus } from "@/types";
-import { StatusBadge } from "@/components/shared/status-badge";
+import type { BookingStatus, BusinessSettings } from "@/types";
+import { BookingTicket } from "@/components/shared/booking-ticket";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -100,10 +100,18 @@ function BookingStatusContent() {
   const bookingRef = searchParams.get("ref");
 
   const [booking, setBooking] = useState<BookingStatus | null>(null);
+  const [settings, setSettings] = useState<BusinessSettings | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
   const [lookupRef, setLookupRef] = useState("");
+
+  useEffect(() => {
+    api
+      .get<BusinessSettings>("/settings")
+      .then(setSettings)
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!bookingRef) {
@@ -248,95 +256,41 @@ function BookingStatusContent() {
 
   /* ── Booking Found ── */
   const config = STATUS_CONFIG[booking.status] ?? STATUS_CONFIG.pending!;
-  const StatusIcon = config.icon;
 
   return (
     <div className="page-transition">
-      {/* Status-colored header band */}
-      <section className="bg-night py-12">
+      {/* Header section with ambient dark aesthetic */}
+      <section className="bg-night py-12 border-b border-white/5">
         <div className="mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
-          <div
-            className={cn(
-              "inline-flex h-14 w-14 items-center justify-center rounded-full mb-4",
-              config.color
-            )}
-            style={{ background: "rgba(200,150,90,0.1)" }}
-          >
-            <StatusIcon className="h-7 w-7" />
-          </div>
-          <h1 className="font-heading text-3xl font-bold tracking-tight text-ivory sm:text-4xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brass mb-3 anim-fade-up">
+            Reservation Overview
+          </p>
+          <h1 className="font-heading text-3xl font-bold tracking-tight text-ivory sm:text-4xl anim-fade-up anim-delay-1">
             {config.title}
           </h1>
+          <p className="mt-2 text-sm text-ivory/50 max-w-md mx-auto anim-fade-up anim-delay-2">
+            {config.message}
+          </p>
         </div>
       </section>
 
-      <section className="py-10">
-        <div className="mx-auto max-w-lg px-4 sm:px-6">
-          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-6 anim-fade-up">
-            {/* Reference + Badge */}
-            <div className="flex items-center justify-between border-b border-border pb-4">
-              <div className="space-y-1">
-                <span className="text-[10px] text-muted-foreground uppercase tracking-[0.15em] font-semibold">
-                  Booking Reference
-                </span>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-lg font-bold tracking-wide">
-                    {booking.booking_ref}
-                  </span>
-                  <button
-                    onClick={() => copyToClipboard(booking.booking_ref)}
-                    className="rounded-lg p-1.5 border border-border bg-muted/30 text-muted-foreground hover:text-foreground transition-colors"
-                    title="Copy reference code"
-                  >
-                    {copied ? (
-                      <Check className="h-3.5 w-3.5 text-emerald-600 animate-in zoom-in-50" />
-                    ) : (
-                      <Copy className="h-3.5 w-3.5" />
-                    )}
-                  </button>
-                </div>
-              </div>
-              <StatusBadge status={booking.status} />
-            </div>
+      {/* Ticket Showcase Section */}
+      <section className="py-12 px-4 sm:px-6">
+        <div className="mx-auto max-w-lg space-y-8 anim-fade-up">
+          {/* The Modern Downloadable Digital Ticket */}
+          <BookingTicket
+            booking={booking}
+            shopAddress={settings?.address}
+            className="w-full"
+          />
 
-            {/* Status message */}
-            <div className={cn("rounded-xl border p-4", config.bg)}>
-              <p className="text-sm leading-relaxed">{config.message}</p>
-            </div>
-
-            {/* Appointment details */}
-            <div className="space-y-3 rounded-xl bg-muted/30 p-4 border border-border/50">
-              <div className="flex items-center gap-3 text-sm">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brass/10 shrink-0">
-                  <CalendarDays className="h-4 w-4 text-brass" />
-                </div>
-                <span className="font-medium">
-                  {new Date(
-                    booking.appointment_date + "T00:00:00"
-                  ).toLocaleDateString("en-US", {
-                    weekday: "long",
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </span>
-              </div>
-              <div className="flex items-center gap-3 text-sm">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brass/10 shrink-0">
-                  <Clock className="h-4 w-4 text-brass" />
-                </div>
-                <span className="font-medium">
-                  {to12Hour(booking.time)}
-                </span>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="flex flex-col gap-3 sm:flex-row pt-2">
+          {/* Secondary Controls & Navigation */}
+          <div className="rounded-2xl border border-border bg-card/60 backdrop-blur-sm p-5 space-y-4">
+            <div className="flex flex-col sm:flex-row gap-3">
               <Button
                 variant="outline"
                 onClick={handleRefresh}
-                className="gap-1.5 flex-1 font-semibold"
+                className="gap-2 flex-1 font-medium rounded-xl h-11 border-border/80 hover:border-brass/40"
               >
                 <RefreshCw className="h-4 w-4" />
                 Refresh Status
@@ -344,16 +298,16 @@ function BookingStatusContent() {
               <Button
                 variant="outline"
                 onClick={() => router.push("/book/status")}
-                className="flex-1 font-semibold"
+                className="flex-1 font-medium rounded-xl h-11 border-border/80 hover:border-brass/40"
               >
                 Check Another Booking
               </Button>
             </div>
 
-            <Link href="/book" className="block pt-1">
-              <Button className="w-full bg-brass text-night hover:bg-brass-light font-semibold gap-2">
+            <Link href="/book" className="block">
+              <Button className="w-full bg-brass text-night hover:bg-brass-light font-semibold gap-2 rounded-xl h-11">
                 <ArrowLeft className="h-4 w-4" />
-                New Booking
+                Book New Appointment
               </Button>
             </Link>
           </div>

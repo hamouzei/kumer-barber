@@ -120,6 +120,8 @@ export interface BookingStatus {
   status: AppointmentStatus;
   appointment_date: string;
   time: string;
+  customer_name?: string;
+  payment_amount?: string;
 }
 
 export interface TimeSlot {

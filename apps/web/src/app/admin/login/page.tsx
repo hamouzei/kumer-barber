@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Scissors, Eye, EyeOff, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { Scissors, Eye, EyeOff, Loader2, ArrowLeft, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,7 +38,18 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-brand px-4">
+    <div className="relative flex min-h-screen items-center justify-center bg-brand px-4 py-12">
+      {/* Top Floating Return to Homepage Button */}
+      <div className="absolute top-6 left-6 z-20">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 rounded-full border border-linen/10 bg-charcoal/90 px-4 py-2 text-xs font-medium text-linen/70 backdrop-blur-md transition-all hover:border-brass/40 hover:bg-charcoal hover:text-brass shadow-lg group"
+        >
+          <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-1" />
+          <span>Back to Homepage</span>
+        </Link>
+      </div>
+
       {/* Decorative grain */}
       <div className="fixed inset-0 opacity-[0.03] pointer-events-none bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIiB4PSIwIiB5PSIwIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgc3RpdGNoVGlsZXM9InN0aXRjaCIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIzMDAiIGZpbHRlcj0idXJsKCNhKSIgb3BhY2l0eT0iMC4xNSIvPjwvc3ZnPg==')]" />
 
@@ -124,6 +136,17 @@ export default function AdminLoginPage() {
               )}
             </Button>
           </form>
+
+          {/* Footer Return to Homepage Link */}
+          <div className="mt-6 pt-4 border-t border-linen/10 text-center">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 text-xs text-linen/50 hover:text-brass transition-colors"
+            >
+              <Home className="h-3.5 w-3.5" />
+              <span>Return to Kumer Barbershop Website</span>
+            </Link>
+          </div>
         </CardContent>
       </Card>
     </div>
